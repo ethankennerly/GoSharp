@@ -561,13 +561,32 @@ namespace Go
         {
             using (StreamReader sr = new StreamReader(path, ASCIIEncoding.ASCII))
             {
-                SGFCollection coll = new SGFCollection();
-                coll.Read(sr);
-                List<Game> games = new List<Game>();
-                foreach (var c in coll.GameTrees) games.Add(new Game(c));
-                return games;
+                return SerializeFromSGFReader(sr);
             }
         }
+
+        private static List<Game> SerializeFromSGFReader(TextReader sr)
+        {
+            SGFCollection coll = new SGFCollection();
+            coll.Read(sr);
+            List<Game> games = new List<Game>();
+            foreach (var c in coll.GameTrees) games.Add(new Game(c));
+            return games;
+        }
+
+        public static List<Game> SerializeFromSGFString(string sgf)
+        {
+            using (TextReader sr = new StringReader(sgf))
+            {
+                return SerializeFromSGFReader(sr);
+            }
+        }
+
+        public static Game SerializeGameFromSGFString(string sgf)
+        {
+            return SerializeFromSGFString(sgf)[0];
+        }
+
         private static void CreateGameTree(SGFGameTree root, Game p)
         {
             if (p.GameInfo != null)
