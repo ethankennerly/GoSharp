@@ -21,7 +21,7 @@ namespace Go
         {
             char c = (char)sr.Read();
             if (c != ';')
-                throw new InvalidDataException("Node doesn't begin with a ';'.");
+                throw new InvalidOperationException("Node doesn't begin with a ';'.");
             sr.EatWS();
             while (char.IsUpper((char)sr.Peek()))
             {

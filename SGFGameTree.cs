@@ -26,7 +26,7 @@ namespace Go
         {
             char c = (char)sr.Read();
             if (c != '(')
-                throw new InvalidDataException("Game-tree doesn't begin with a '('.");
+                throw new InvalidOperationException("Game-tree doesn't begin with a '('.");
             Sequence.Read(sr);
             sr.EatWS();
             while ((char)sr.Peek() == '(')
@@ -38,7 +38,7 @@ namespace Go
             }
             c = (char)sr.Read();
             if (c != ')')
-                throw new InvalidDataException("Game-tree doesn't end with a ')'.");
+                throw new InvalidOperationException("Game-tree doesn't end with a ')'.");
         }
     }
 }

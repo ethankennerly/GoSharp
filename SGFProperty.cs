@@ -83,7 +83,7 @@ namespace Go
         {
             char c = (char) sr.Read ();
             if (c != '[')
-                throw new InvalidDataException ("Property value doesn't begin with a '['.");
+                throw new InvalidOperationException ("Property value doesn't begin with a '['.");
 
             bool verbatim = false;
             var sb = new StringBuilder ();
