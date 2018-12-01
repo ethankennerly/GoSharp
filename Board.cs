@@ -527,6 +527,24 @@ namespace Go
             }
         }
 
+        public IEnumerable<PositionContent> AllCells
+        {
+            get
+            {
+                for (int i = 0; i < SizeX; i++)
+                {
+                    for (int j = 0; j < SizeY; j++)
+                    {
+                        yield return new PositionContent
+                        {
+                            Content = content[i, j],
+                            Position = new Point(i, j)
+                        };
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Returns an enumerable representing all empty board spots.
         /// </summary>
