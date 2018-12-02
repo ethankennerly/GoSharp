@@ -75,7 +75,7 @@ namespace Go
             if (player == Content.Empty)
                 return 0f;
 
-            Content other = player == Content.Black ? Content.White : Content.Black;
+            Content other = GetOtherPlayer(player);
             int captured = captures[other];
 
             float score = -captured;
@@ -87,6 +87,21 @@ namespace Go
                 score += Board.Territory[player];
 
             return score;
+        }
+
+        private Content GetOtherPlayer(Content player)
+        {
+            return player == Content.Black ? Content.White : Content.Black;
+        }
+
+        public double GetResult(Content player)
+        {
+            if (!Board.IsScoring)
+                return 0.5;
+
+            float score = GetScore(player);
+            float otherScore = GetScore(GetOtherPlayer(player));
+            return score < otherScore ? 0.0 : (score > otherScore ? 1.0 : 0.5);
         }
 
         private HashSet<Board> superKoSet = new HashSet<Board>(SuperKoComparer);
@@ -220,7 +235,7 @@ namespace Go
         /// game moves.
         /// </summary>
         /// <param name="fromGame">The Game object before the move.</param>
-        protected Game(Game fromGame)
+        public Game(Game fromGame)
         {
             GameInfo = fromGame.GameInfo;
             Board = new Board(fromGame.Board);
@@ -467,6 +482,37 @@ namespace Go
             }
             IsLegal = legal;
             return legal;
+        }
+
+        public List<Point> GetLegalMoves()
+        {
+            List<Point> moves = new List<Point>();
+            Content oturn = Turn.Opposite();
+            moves.Add(PassMove);
+            for (int x = 0; x < Board.SizeX; x++)
+            {
+                for (int y = 0; y < Board.SizeY; y++)
+                {
+                    if (Board[x, y] != Content.Empty)
+                        continue;
+
+                    var capturedGroups = Board.GetCapturedGroups(x, y);
+                    if (capturedGroups.Count == 0 && Board.GetLiberties(x, y) == 0) // Suicide move
+                        continue;
+
+                    captures[oturn] += Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
+                    if (superKoSet != null)
+                    {
+                        if (superKoSet.Contains(Board, SuperKoComparer)) // Violates super-ko
+                            continue;
+                            superKoSet.Add(Board);
+                    }
+
+                    moves.Add(new Point(x, y));
+                }
+            }
+
+            return moves;
         }
 
         /// <summary>
