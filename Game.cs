@@ -64,6 +64,31 @@ namespace Go
             { Content.White, 0 }
         };
 
+        /// <summary>
+        /// Not relative to the other player at this stage.
+        /// Komi for white.
+        /// Territory if board is scoring.
+        /// Subtracting captures.
+        /// </summary>
+        public float GetScore(Content player)
+        {
+            if (player == Content.Empty)
+                return 0f;
+
+            Content other = player == Content.Black ? Content.White : Content.Black;
+            int captured = captures[other];
+
+            float score = -captured;
+
+            if (player == Content.White && GameInfo != null)
+                score += (float)GameInfo.Komi;
+
+            if (Board.IsScoring)
+                score += Board.Territory[player];
+
+            return score;
+        }
+
         private HashSet<Board> superKoSet = new HashSet<Board>(SuperKoComparer);
         private List<SGFProperty> sgfProperties = new List<SGFProperty>();
         private Dictionary<Content, Group> setupMoves = null;
@@ -197,6 +222,7 @@ namespace Go
         /// <param name="fromGame">The Game object before the move.</param>
         protected Game(Game fromGame)
         {
+            GameInfo = fromGame.GameInfo;
             Board = new Board(fromGame.Board);
             Turn = fromGame.Turn.Opposite();
             captures[Content.White] = fromGame.captures[Content.White];
