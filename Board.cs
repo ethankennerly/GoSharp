@@ -381,7 +381,6 @@ namespace Go
 
         internal List<Group> GetCapturedGroups(int x, int y)
         {
-            // Group group = GetGroupAt(x, y);
             List<Group> captures = new List<Group>();
             var stoneNeighbours = GetStoneNeighbours(x, y);
             foreach (var n in stoneNeighbours)
