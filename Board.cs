@@ -60,6 +60,8 @@ namespace Go
         {
             get
             {
+                CalcTerritory();
+
                 Dictionary<Content, int> rc = new Dictionary<Content, int>();
                 int w = 0, b = 0;
                 foreach (var p in groupCache.Where(x => x.Content == Content.Empty))
@@ -107,6 +109,7 @@ namespace Go
         /// <param name="fromBoard">The source board object.</param>
         public Board(Board fromBoard)
         {
+            IsScoring = fromBoard.IsScoring;
             SizeX = fromBoard.SizeX;
             SizeY = fromBoard.SizeY;
             content = new Content[SizeX, SizeY];
@@ -270,6 +273,7 @@ namespace Go
             }
             return group;
         }
+
         private void RecursiveAddPoint(Group group, int x, int y)
         {
             if (GetContentAt(x, y) == group.Content)
@@ -452,6 +456,9 @@ namespace Go
         /// <returns>Returns the multi-line string representation of the board.</returns>
         public override string ToString()
         {
+            if (IsScoring)
+                CalcTerritory();
+
             string rc = "";
             for (int i = 0; i < SizeY; i++)
             {
