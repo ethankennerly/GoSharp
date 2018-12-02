@@ -44,10 +44,16 @@ namespace Go
                 if (_IsScoring != value)
                 {
                     _IsScoring = value;
-                    ClearGroupCache();
-                    if (value) CalcTerritory();
+                    UpdateScoring();
                 }
             }
+        }
+
+        public void UpdateScoring()
+        {
+            ClearGroupCache();
+            if (IsScoring)
+                CalcTerritory();
         }
 
         /// <summary>
@@ -509,6 +515,11 @@ namespace Go
             /// The content at the position.
             /// </summary>
             public Content Content;
+
+            public override string ToString()
+            {
+                return "PositionContent(" + Position + ", " + Content + ")";
+            }
         }
 
         /// <summary>
@@ -548,6 +559,32 @@ namespace Go
                         };
                     }
                 }
+            }
+        }
+
+        public List<PositionContent> AllTerritory
+        {
+            get
+            {
+                var territories = new List<PositionContent>();
+                if (!IsScoring)
+                    return territories;
+
+                CalcTerritory();
+
+                for (int i = 0; i < SizeX; i++)
+                {
+                    for (int j = 0; j < SizeY; j++)
+                    {
+                        Group g = groupCache2[i, j];
+                        territories.Add(new PositionContent
+                        {
+                            Content = g.Territory,
+                            Position = new Point(i, j)
+                        });
+                    }
+                }
+                return territories;
             }
         }
 
