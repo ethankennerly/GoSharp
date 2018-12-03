@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
 
 namespace Go
 {
@@ -450,7 +449,6 @@ namespace Go
         private void ClearGroupCache()
         {
             groupCache = null;
-            Debug.Log("ClearGroupCache");
         }
 
         private int GetContentHashCode()
