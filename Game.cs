@@ -241,6 +241,8 @@ namespace Go
         /// <param name="fromGame">The Game object before the move.</param>
         public Game(Game fromGame)
         {
+            m_NumPasses = fromGame.m_NumPasses;
+            m_Ended = fromGame.Ended;
             GameInfo = fromGame.GameInfo;
             Board = new Board(fromGame.Board);
             Turn = fromGame.Turn.Opposite();
@@ -369,10 +371,30 @@ namespace Go
         /// <returns>A game object representing the state of the game after the move.</returns>
         public Game MakeMove(int x, int y, out bool legal)
         {
+            if (x < 0 && y < 0)
+            {
+                legal = true;
+                return Pass();
+            }
+
+            if (m_NumPasses > 0)
+                m_NumPasses--;
+
             var g = new Game(this);
             legal = g.InternalMakeMove(x, y);
             moves.Add(new Variation(new Point(x, y), g));
             return g;
+        }
+
+        private const int kMaxPasses = 1;
+        /// <summary>
+        /// Consecutively passing more than max ends game.
+        /// </summary>
+        private int m_NumPasses;
+        private bool m_Ended;
+        public bool Ended
+        {
+            get { return m_Ended; }
         }
 
         /// <summary>
@@ -382,6 +404,12 @@ namespace Go
         /// <returns>A game object representing the state of the game after the move.</returns>
         public Game Pass()
         {
+            m_NumPasses++;
+            m_Ended = m_NumPasses > kMaxPasses;
+            if (m_Ended)
+            {
+                Board.IsScoring = true;
+            }
             var g = new Game(this);
             moves.Add(new Variation(Game.PassMove, g));
             return g;
@@ -488,8 +516,13 @@ namespace Go
             return legal;
         }
 
+        private static readonly List<Point> s_Empty = new List<Point>();
+
         public List<Point> GetLegalMoves()
         {
+            if (Board == null || Board.IsScoring)
+                return s_Empty;
+
             List<Point> moves = new List<Point>();
             Content oturn = Turn.Opposite();
             moves.Add(PassMove);
@@ -504,12 +537,13 @@ namespace Go
                     if (capturedGroups.Count == 0 && Board.GetLiberties(x, y) == 0) // Suicide move
                         continue;
 
-                    captures[oturn] += Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
-                    if (superKoSet != null)
+                    if (capturedGroups.Count != 0)
                     {
-                        if (superKoSet.Contains(Board, SuperKoComparer)) // Violates super-ko
-                            continue;
-                            superKoSet.Add(Board);
+                        Board hypotheticalBoard = new Board(Board);
+                        hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
+                        if (superKoSet != null &&
+                            superKoSet.Contains(hypotheticalBoard, SuperKoComparer)) // Violates super-ko
+                                continue;
                     }
 
                     moves.Add(new Point(x, y));

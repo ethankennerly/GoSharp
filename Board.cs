@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace Go
 {
@@ -70,13 +71,15 @@ namespace Go
                 if (!IsScoring)
                     return rc;
 
-                // ClearGroupCache();
                 CalcTerritory();
 
                 int w = 0, b = 0;
-                // if (groupCache == null)
-                //     return rc;
-                foreach (var p in groupCache.Where(x => x.Content == Content.Empty))
+                if (groupCache == null)
+                {
+                    throw new InvalidOperationException("Expected group cache was defined.");
+                }
+                var emptyGroups = groupCache.Where(x => x.Content == Content.Empty);
+                foreach (var p in emptyGroups)
                 {
                     if (p.Neighbours.All(x => GetContentAt(x) != Content.Black))
                     {
@@ -121,11 +124,11 @@ namespace Go
         /// <param name="fromBoard">The source board object.</param>
         public Board(Board fromBoard)
         {
-            IsScoring = fromBoard.IsScoring;
             SizeX = fromBoard.SizeX;
             SizeY = fromBoard.SizeY;
             content = new Content[SizeX, SizeY];
             Array.Copy (fromBoard.content, content, content.Length);
+            IsScoring = fromBoard.IsScoring;
         }
 
         /// <summary>
@@ -311,6 +314,9 @@ namespace Go
         /// <returns>The number of liberties of the specified group.</returns>
         public int GetLiberties(Group group)
         {
+            if (group.Content == Content.Empty)
+                return group.Points.Count();
+
             int libs = 0;
             foreach (var n in group.Neighbours)
             {
@@ -444,6 +450,7 @@ namespace Go
         private void ClearGroupCache()
         {
             groupCache = null;
+            Debug.Log("ClearGroupCache");
         }
 
         private int GetContentHashCode()
