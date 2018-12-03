@@ -84,7 +84,11 @@ namespace Go
                 score += (float)GameInfo.Komi;
 
             if (Board.IsScoring)
-                score += Board.Territory[player];
+            {
+                var territory = Board.Territory;
+                if (territory.ContainsKey(player))
+                    score += Board.Territory[player];
+            }
 
             return score;
         }

@@ -66,10 +66,16 @@ namespace Go
         {
             get
             {
+                Dictionary<Content, int> rc = new Dictionary<Content, int>();
+                if (!IsScoring)
+                    return rc;
+
+                // ClearGroupCache();
                 CalcTerritory();
 
-                Dictionary<Content, int> rc = new Dictionary<Content, int>();
                 int w = 0, b = 0;
+                // if (groupCache == null)
+                //     return rc;
                 foreach (var p in groupCache.Where(x => x.Content == Content.Empty))
                 {
                     if (p.Neighbours.All(x => GetContentAt(x) != Content.Black))
