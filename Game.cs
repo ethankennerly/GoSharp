@@ -239,13 +239,21 @@ namespace Go
         /// game moves.
         /// </summary>
         /// <param name="fromGame">The Game object before the move.</param>
-        public Game(Game fromGame)
+        /// <param name="cloneTurn">Otherwise, sets opposite turn.</param>
+        public Game(Game fromGame, bool cloneTurn = false)
         {
             m_NumPasses = fromGame.m_NumPasses;
             m_Ended = fromGame.Ended;
             GameInfo = fromGame.GameInfo;
             Board = new Board(fromGame.Board);
-            Turn = fromGame.Turn.Opposite();
+            if (cloneTurn)
+            {
+                Turn = fromGame.Turn;
+            }
+            else
+            {
+                Turn = fromGame.Turn.Opposite();
+            }
             captures[Content.White] = fromGame.captures[Content.White];
             captures[Content.Black] = fromGame.captures[Content.Black];
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
@@ -518,6 +526,14 @@ namespace Go
 
         private static readonly List<Point> s_Empty = new List<Point>();
 
+        /// <returns>
+        /// If scoring, no moves.
+        ///
+        /// Excludes pass move, unless no other move is legal or previous player passed.
+        /// So an AI-player will keep playing until it cannot move, then the other AI player might stop too.
+        /// Otherwise, since scoring is not smart, some territory will not be owned.
+        /// Smart territory calculation needs pretty good AI.
+        /// </returns>
         public List<Point> GetLegalMoves()
         {
             if (Board == null || Board.IsScoring)
@@ -525,7 +541,6 @@ namespace Go
 
             List<Point> moves = new List<Point>();
             Content oturn = Turn.Opposite();
-            moves.Add(PassMove);
             for (int x = 0; x < Board.SizeX; x++)
             {
                 for (int y = 0; y < Board.SizeY; y++)
@@ -548,6 +563,14 @@ namespace Go
                     }
 
                     moves.Add(new Point(x, y));
+                }
+            }
+
+            if (moves.Count == 0 || m_NumPasses > 0)
+            {
+                if (!Board.IsScoring)
+                {
+                    moves.Add(PassMove);
                 }
             }
 
