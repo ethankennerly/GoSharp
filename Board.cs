@@ -357,7 +357,7 @@ namespace Go
                 {
                     for (int j = 0; j < SizeY; j++)
                     {
-                        if (groupCache2 == null || groupCache2[i, j] == null)
+                        if (groupCache == null || groupCache2 == null || groupCache2[i, j] == null)
                         {
                             GetGroupAt(i, j);
                             pass = true;
