@@ -309,15 +309,12 @@ namespace Go
         /// <summary>
         /// Gets the liberty count of the specified group.
         /// </summary>
-        /// <param name="group">The group object.
-        /// If group is empty subtracts 1 point.
-        /// Otherwise, playing a stone in an empty 1x1 board counts the destination as having a liberty.
-        /// </param>
+        /// <param name="group">The group object.</param>
         /// <returns>The number of liberties of the specified group.</returns>
         public int GetLiberties(Group group)
         {
             if (group.Content == Content.Empty)
-                return group.Points.Count() - 1;
+                return group.Points.Count();
 
             int libs = 0;
             foreach (var n in group.Neighbours)

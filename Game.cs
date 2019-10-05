@@ -533,17 +533,18 @@ namespace Go
                     if (Board[x, y] != Content.Empty)
                         continue;
 
-                    var capturedGroups = Board.GetCapturedGroups(x, y);
-                    if (capturedGroups.Count == 0 && Board.GetLiberties(x, y) == 0) // Suicide move
+                    Board hypotheticalBoard = new Board(Board);
+                    hypotheticalBoard[x, y] = oturn;
+                    var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
+                    if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
                         continue;
 
                     if (capturedGroups.Count != 0)
                     {
-                        Board hypotheticalBoard = new Board(Board);
                         hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
                         if (superKoSet != null &&
                             superKoSet.Contains(hypotheticalBoard, SuperKoComparer)) // Violates super-ko
-                                continue;
+                            continue;
                     }
 
                     moves.Add(new Point(x, y));
