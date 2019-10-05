@@ -534,13 +534,14 @@ namespace Go
         /// Otherwise, since scoring is not smart, some territory will not be owned.
         /// Smart territory calculation needs pretty good AI.
         /// </returns>
-        public List<Point> GetLegalMoves()
+        /// <param name="cloneTurn">Otherwise, gets moves for opposite player's turn.</param>
+        public List<Point> GetLegalMoves(bool cloneTurn = false)
         {
             if (Board == null || Board.IsScoring)
                 return s_Empty;
 
             List<Point> moves = new List<Point>();
-            Content oturn = Turn.Opposite();
+            Content turn = cloneTurn ? Turn : Turn.Opposite();
             for (int x = 0; x < Board.SizeX; x++)
             {
                 for (int y = 0; y < Board.SizeY; y++)
@@ -549,14 +550,14 @@ namespace Go
                         continue;
 
                     Board hypotheticalBoard = new Board(Board);
-                    hypotheticalBoard[x, y] = oturn;
+                    hypotheticalBoard[x, y] = turn;
                     var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
                     if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
                         continue;
 
                     if (capturedGroups.Count != 0)
                     {
-                        hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
+                        hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
                         if (superKoSet != null &&
                             superKoSet.Contains(hypotheticalBoard, SuperKoComparer)) // Violates super-ko
                             continue;
