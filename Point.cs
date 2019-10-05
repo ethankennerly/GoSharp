@@ -7,8 +7,14 @@ namespace Go
 {
     /// <summary>
     /// Represents a pair of board coordinates (x and y).
+    ///
+    /// Implements equatable comparison.
+    /// Otherwise, when querying a HashSet, default comparison generated garbage and was a CPU hotspot.
+    /// <a href="https://www.codeproject.com/Articles/1280633/Creating-a-Faster-HashSet-for-NET">
+    /// Faster HashSet
+    /// </a>
     /// </summary>
-    public struct Point
+    public struct Point : IEquatable<Point>
     {
         /// <summary>
         /// The X value of the coordinate.
@@ -49,6 +55,31 @@ namespace Go
             return (x << 5) + y;
         }
 
+        public override bool Equals(Object other)
+        {
+            if (other.GetType() != typeof(Point))
+            {
+                return false;
+            }
+
+            return Equals((Point)other);
+        }
+
+        public bool Equals(Point other)
+        {
+            return GetHashCode() == other.GetHashCode();
+        }
+
+        public static bool operator ==(Point p1, Point p2)
+        {
+            return p1.Equals(p2);
+        }
+
+        public static bool operator !=(Point p1, Point p2)
+        {
+            return !p1.Equals(p2);
+        }
+
         /// <summary>
         /// Converts a point to SGF move format (e.g. 2,3 to "cd").
         /// </summary>
@@ -84,6 +115,32 @@ namespace Go
             int x = bb[0] >= 'a' ? bb[0] - 'a' : bb[0] - 'A' + 26;
             int y = bb[1] >= 'a' ? bb[1] - 'a' : bb[1] - 'A' + 26;
             return new Point (x, y);
+        }
+
+        /// <summary>
+        /// Speeds up checking if a point is in a hash set.
+        /// </summary>
+        public static HashSet<Point> CreateHashSet()
+        {
+            return new HashSet<Point>(PointEqualityComparer.Instance);
+        }
+    }
+
+    /// <summary>
+    /// Speeds up checking if a point is in a hash set.
+    /// </summary>
+    public sealed class PointEqualityComparer : IEqualityComparer<Point>
+    {
+        public static readonly PointEqualityComparer Instance = new PointEqualityComparer();
+
+        public int GetHashCode(Point point)
+        {
+            return point.GetHashCode();
+        }
+
+        public bool Equals(Point p1, Point p2)
+        {
+            return p1.Equals(p2);
         }
     }
 }
