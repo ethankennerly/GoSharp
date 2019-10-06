@@ -75,7 +75,11 @@ namespace Go
                 int w = 0, b = 0;
                 if (groupCache == null)
                 {
+                    #if DISABLE_CALC_TERRITORY
+                    return rc;
+                    #else
                     throw new InvalidOperationException("Expected group cache was defined.");
+                    #endif
                 }
                 var emptyGroups = groupCache.Where(x => x.Content == Content.Empty);
                 foreach (var p in emptyGroups)
@@ -125,8 +129,12 @@ namespace Go
         {
             SizeX = fromBoard.SizeX;
             SizeY = fromBoard.SizeY;
+            #if DISABLE_ARRAY_COPY
+            content = fromBoard.content;
+            #else
             content = new Content[SizeX, SizeY];
             Array.Copy (fromBoard.content, content, content.Length);
+            #endif
             IsScoring = fromBoard.IsScoring;
         }
 
@@ -217,8 +225,10 @@ namespace Go
         /// <returns></returns>
         public Content GetContentAt(int x, int y)
         {
+            #if !DISABLE_GROUP_POINTS
             if (IsScoring && content[x, y] != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
                 return Content.Empty;
+            #endif
             return content[x, y];
         }
 
@@ -313,6 +323,9 @@ namespace Go
         /// <returns>The number of liberties of the specified group.</returns>
         public int GetLiberties(Group group)
         {
+            #if DISABLE_GROUP_POINTS
+            return 0;
+            #endif
             if (group.Content == Content.Empty)
                 return group.Points.Count();
 
@@ -333,6 +346,9 @@ namespace Go
         /// <returns>The number of liberties.</returns>
         public int GetLiberties(int x, int y)
         {
+            #if DISABLE_GROUP_POINTS
+            return 0;
+            #endif
             return GetLiberties(GetGroupAt(x, y));
         }
 
@@ -349,6 +365,10 @@ namespace Go
 
         private void CalcTerritory()
         {
+            #if DISABLE_CALC_TERRITORY
+            return;
+            #endif
+
             bool pass = true;
             while (pass)
             {
@@ -403,6 +423,9 @@ namespace Go
         internal List<Group> GetCapturedGroups(int x, int y)
         {
             List<Group> captures = new List<Group>();
+            #if DISABLE_GROUP_POINTS
+            return captures;
+            #endif
             var stoneNeighbours = GetStoneNeighbours(x, y);
             foreach (var n in stoneNeighbours)
             {
@@ -578,8 +601,10 @@ namespace Go
             get
             {
                 var territories = new List<PositionContent>();
+                #if DISABLE_CALC_TERRITORY
                 if (!IsScoring)
                     return territories;
+                #endif
 
                 CalcTerritory();
 

@@ -100,6 +100,9 @@ namespace Go
 
         public double GetResult(Content player)
         {
+            #if DISABLE_CALC_TERRITORY
+            return 0.5;
+            #endif
             if (!Board.IsScoring)
                 return 0.5;
 
@@ -254,8 +257,10 @@ namespace Go
             {
                 Turn = fromGame.Turn.Opposite();
             }
+            #if !DISABLE_CAPTURES_DICTIONARY
             captures[Content.White] = fromGame.captures[Content.White];
             captures[Content.Black] = fromGame.captures[Content.Black];
+            #endif
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
             Root = fromGame.Root;
         }
