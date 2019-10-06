@@ -14,6 +14,12 @@ namespace Go
     /// </summary>
     public class Group
     {
+        public static int SizeX;
+        public static int SizeY;
+
+        private int pointsMask;
+        private int neighboursMask;
+
         private HashSet<Point> points = Point.CreateHashSet();
         private HashSet<Point> neighbours = Point.CreateHashSet();
 

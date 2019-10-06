@@ -53,12 +53,28 @@ namespace Go
         /// <summary>
         /// Gets the horizontal size of the board.
         /// </summary>
-        public int SizeX { get; private set; }
+        private int _SizeX;
+        public int SizeX {
+            get { return _SizeX; }
+            private set
+            {
+                _SizeX = value;
+                Group.SizeX = value;
+            }
+        }
 
         /// <summary>
         /// Gets the vertical size of the board.
         /// </summary>
-        public int SizeY { get; private set; }
+        private int _SizeY;
+        public int SizeY {
+            get { return _SizeY; }
+            private set
+            {
+                _SizeY = value;
+                Group.SizeY = value;
+            }
+        }
 
         /// <summary>
         /// Gets or sets a flag indicating whether this board is in scoring mode.
@@ -296,6 +312,7 @@ namespace Go
             content[x, y] = c;
             _Hash = null;
             ClearGroupCache();
+
             SetContentMask(x, y, c);
         }
 
