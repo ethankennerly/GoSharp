@@ -11,6 +11,39 @@ namespace Go
     /// </summary>
     public class Board
     {
+        private const int kBlackIndex = 0;
+        private const int kWhiteIndex = 1;
+        private const Content kPlayer0 = Content.Black;
+
+        /// <summary>
+        /// Only valid for 32 cells or less.
+        /// </summary>
+        private int[] playerCellMask = new int[2];
+
+        private void SetContentMask(int x, int y, Content c)
+        {
+            int cellIndex = y * SizeX + x;
+            int cellMask = 1 << cellIndex;
+            int inverseMask = ~cellMask;
+            switch (c)
+            {
+                case Content.Black:
+                    playerCellMask[kBlackIndex] |= cellMask;
+                    playerCellMask[kWhiteIndex] &= inverseMask;
+                    break;
+                case Content.White:
+                    playerCellMask[kBlackIndex] &= inverseMask;
+                    playerCellMask[kWhiteIndex] |= cellMask;
+                    break;
+                case Content.Empty:
+                    playerCellMask[kBlackIndex] &= inverseMask;
+                    playerCellMask[kWhiteIndex] &= inverseMask;
+                    break;
+                default:
+                    throw new InvalidOperationException("Expected content handled.");
+            }
+        }
+
         private Content[,] content;
         private Group[,] groupCache2;
         private List<Group> groupCache = null;
@@ -263,6 +296,7 @@ namespace Go
             content[x, y] = c;
             _Hash = null;
             ClearGroupCache();
+            SetContentMask(x, y, c);
         }
 
         /// <summary>
@@ -648,10 +682,10 @@ namespace Go
             get
             {
                 var territories = new List<PositionContent>();
-                #if DISABLE_CALC_TERRITORY
+                #if !DISABLE_CALC_TERRITORY
                 if (!IsScoring)
-                    return territories;
                 #endif
+                    return territories;
 
                 CalcTerritory();
 

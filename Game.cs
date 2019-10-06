@@ -556,10 +556,10 @@ namespace Go
 
                     Board hypotheticalBoard = new Board(Board);
                     hypotheticalBoard[x, y] = turn;
-                    if (hypotheticalBoard.IsSuicide(x, y))
+                    var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
+                    if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
                         continue;
 
-                    var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
                     if (capturedGroups.Count != 0)
                     {
                         hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
