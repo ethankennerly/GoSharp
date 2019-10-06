@@ -12,7 +12,7 @@ namespace Go
     /// content (black, white or empty), and state (dead or alive for scoring
     /// purposes).
     /// </summary>
-    public class Group
+    public sealed class Group
     {
         public static int SizeX;
         public static int SizeY;
@@ -38,11 +38,13 @@ namespace Go
 
         public int NumPoints()
         {
+            return points.Count();
             return CountBits(pointsMask);
         }
 
         public int NumNeighbours()
         {
+            return neighbours.Count();
             return CountBits(neighboursMask);
         }
 

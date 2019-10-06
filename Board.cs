@@ -141,12 +141,12 @@ namespace Go
                 {
                     if (p.Neighbours.All(x => GetContentAt(x) != Content.Black))
                     {
-                        w += p.Points.Count();
+                        w += p.NumPoints();
                         p.Territory = Content.White;
                     }
                     else if (p.Neighbours.All(x => GetContentAt(x) != Content.White))
                     {
-                        b += p.Points.Count();
+                        b += p.NumPoints();
                         p.Territory = Content.Black;
                     }
                     else p.Territory = Content.Empty;
@@ -154,9 +154,9 @@ namespace Go
                 foreach (var p in groupCache.Where(x => x.IsDead))
                 {
                     if (p.Content == Content.Black)
-                        w += p.Points.Count() * 2;
+                        w += p.NumPoints() * 2;
                     else if (p.Content == Content.White)
-                        b += p.Points.Count() * 2;
+                        b += p.NumPoints() * 2;
                 }
                 rc[Content.Black] = b;
                 rc[Content.White] = w;
@@ -345,7 +345,7 @@ namespace Go
                 groupCache = new List<Group>();
                 groupCache2 = new Group[SizeX, SizeY];
             }
-            Group group = groupCache.SingleOrDefault(z => z.Points.Contains(new Point(x, y)));
+            Group group = groupCache.SingleOrDefault(z => z.ContainsPoint(x, y));
             if (group == null)
             {
                 group = new Group(content[x, y]);
@@ -384,7 +384,7 @@ namespace Go
             return false;
             #endif
             if (group.Content == Content.Empty)
-                return group.Points.Count() > 0;
+                return group.NumPoints() > 0;
 
             foreach (var n in group.Neighbours)
             {
@@ -419,7 +419,7 @@ namespace Go
             return 0;
             #endif
             if (group.Content == Content.Empty)
-                return group.Points.Count();
+                return group.NumPoints();
 
             int libs = 0;
             foreach (var n in group.Neighbours)
@@ -570,7 +570,7 @@ namespace Go
         {
             foreach (var p in g.Points)
                 SetContentAt(p, Content.Empty);
-            return g.Points.Count();
+            return g.NumPoints();
         }
 
         private void ClearGroupCache()
