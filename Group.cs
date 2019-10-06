@@ -18,6 +18,7 @@ namespace Go
         public static int SizeY;
 
         private uint pointsMask;
+        public uint PointsMask { get { return pointsMask; } }
         private uint neighboursMask;
 
         /// <remarks>
@@ -38,14 +39,19 @@ namespace Go
 
         public int NumPoints()
         {
-            return points.Count();
             return CountBits(pointsMask);
+            // return points.Count();
         }
 
         public int NumNeighbours()
         {
-            return neighbours.Count();
             return CountBits(neighboursMask);
+            return neighbours.Count();
+        }
+
+        public bool AnyPointsIntersect(List<Group> groups)
+        {
+            return groups.Any(g => g.points.Intersect(points).Any());
         }
 
         private HashSet<Point> points = Point.CreateHashSet();
@@ -104,8 +110,8 @@ namespace Go
         /// <param name="y">The Y coordinate of the point.</param>
         public void AddPoint(int x, int y)
         {
-            points.Add(new Point(x, y));
             pointsMask |= Board.GetCellMask(x, y, SizeX, SizeY);
+            points.Add(new Point(x, y));
         }
 
         /// <summary>
@@ -117,7 +123,7 @@ namespace Go
         public bool ContainsPoint(int x, int y)
         {
             return (pointsMask & Board.GetCellMask(x, y, SizeX, SizeY)) > 0;
-            return points.Contains(new Point(x, y));
+            // return points.Contains(new Point(x, y));
         }
 
         /// <summary>

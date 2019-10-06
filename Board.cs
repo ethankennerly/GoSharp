@@ -27,6 +27,13 @@ namespace Go
             return (uint)cellMask;
         }
 
+        private void SetEmptyContentMask(uint cellMask)
+        {
+            uint inverseMask = ~cellMask;
+            playerCellMask[kBlackIndex] &= inverseMask;
+            playerCellMask[kWhiteIndex] &= inverseMask;
+        }
+        
         private void SetContentMask(int x, int y, Content c)
         {
             uint cellMask = GetCellMask(x, y, SizeX, SizeY);
@@ -254,7 +261,7 @@ namespace Go
         {
             get
             {
-                return GetContentAt(n.x, n.y);
+                return GetContentAt(n);
             }
             set
             {
@@ -284,7 +291,29 @@ namespace Go
             if (IsScoring && content[x, y] != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
                 return Content.Empty;
             #endif
+
             return content[x, y];
+
+            uint cellMask = GetCellMask(x, y, SizeX, SizeY);
+            if ((playerCellMask[kBlackIndex] & cellMask) != 0)
+                return Content.Black;
+            if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
+                return Content.White;
+            return Content.Empty;
+        }
+
+        public Content GetContentAt(int cellIndex)
+        {
+            int x = cellIndex % SizeX;
+            int y = cellIndex / SizeX;
+            return content[x, y];
+
+            uint cellMask = (uint)(1 << cellIndex);
+            if ((playerCellMask[kBlackIndex] & cellMask) != 0)
+                return Content.Black;
+            if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
+                return Content.White;
+            return Content.Empty;
         }
 
         /// <summary>
@@ -539,7 +568,7 @@ namespace Go
                     if (ngroup.ContainsPoint(x, y)) continue; // Don't consider self group
                     if (GetLiberties(ngroup) == 0)
                     {
-                        if (!captures.Any(g => g.Points.Intersect(ngroup.Points).Any()))
+                        if (!ngroup.AnyPointsIntersect(captures))
                             captures.Add(ngroup);
                     }
                 }
@@ -570,6 +599,9 @@ namespace Go
         {
             foreach (var p in g.Points)
                 SetContentAt(p, Content.Empty);
+
+            SetEmptyContentMask(g.PointsMask);
+
             return g.NumPoints();
         }
 
