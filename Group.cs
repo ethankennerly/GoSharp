@@ -17,8 +17,34 @@ namespace Go
         public static int SizeX;
         public static int SizeY;
 
-        private int pointsMask;
-        private int neighboursMask;
+        private uint pointsMask;
+        private uint neighboursMask;
+
+        /// <remarks>
+        /// Copied from:
+        /// <a href="https://stackoverflow.com/a/12171691/1417849">
+        /// Aug 29 '12 at 5:56 Jon Skeet
+        /// </a>
+        public static int CountBits(uint value)
+        {
+            int count = 0;
+            while (value != 0)
+            {
+                count++;
+                value &= value - 1;
+            }
+            return count;
+        }
+
+        public int NumPoints()
+        {
+            return CountBits(pointsMask);
+        }
+
+        public int NumNeighbours()
+        {
+            return CountBits(neighboursMask);
+        }
 
         private HashSet<Point> points = Point.CreateHashSet();
         private HashSet<Point> neighbours = Point.CreateHashSet();
@@ -77,6 +103,7 @@ namespace Go
         public void AddPoint(int x, int y)
         {
             points.Add(new Point(x, y));
+            pointsMask |= Board.GetCellMask(x, y, SizeX, SizeY);
         }
 
         /// <summary>
@@ -87,6 +114,7 @@ namespace Go
         /// <returns>Returns true if the point is contained in the group.</returns>
         public bool ContainsPoint(int x, int y)
         {
+            return (pointsMask & Board.GetCellMask(x, y, SizeX, SizeY)) > 0;
             return points.Contains(new Point(x, y));
         }
 
@@ -98,6 +126,7 @@ namespace Go
         public void AddNeighbour(int x, int y)
         {
             neighbours.Add(new Point(x, y));
+            neighboursMask |= Board.GetCellMask(x, y, SizeX, SizeY);
         }
 
         /// <summary>

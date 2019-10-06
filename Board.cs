@@ -18,13 +18,19 @@ namespace Go
         /// <summary>
         /// Only valid for 32 cells or less.
         /// </summary>
-        private int[] playerCellMask = new int[2];
+        private uint[] playerCellMask = new uint[2];
 
-        private void SetContentMask(int x, int y, Content c)
+        public static uint GetCellMask(int x, int y, int SizeX, int SizeY)
         {
             int cellIndex = y * SizeX + x;
             int cellMask = 1 << cellIndex;
-            int inverseMask = ~cellMask;
+            return (uint)cellMask;
+        }
+
+        private void SetContentMask(int x, int y, Content c)
+        {
+            uint cellMask = GetCellMask(x, y, SizeX, SizeY);
+            uint inverseMask = ~cellMask;
             switch (c)
             {
                 case Content.Black:
