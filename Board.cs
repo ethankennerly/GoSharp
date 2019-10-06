@@ -321,6 +321,41 @@ namespace Go
         /// </summary>
         /// <param name="group">The group object.</param>
         /// <returns>The number of liberties of the specified group.</returns>
+        public bool HasLiberties(Group group)
+        {
+            #if DISABLE_GROUP_POINTS
+            return false;
+            #endif
+            if (group.Content == Content.Empty)
+                return group.Points.Count() > 0;
+
+            foreach (var n in group.Neighbours)
+            {
+                if (GetContentAt(n) == Content.Empty) return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Gets the liberty count of the group containing the board content at
+        /// the specified point.
+        /// </summary>
+        /// <param name="x">The X coordinate of the position.</param>
+        /// <param name="y">The Y coordinate of the position.</param>
+        /// <returns>The number of liberties.</returns>
+        public bool HasLiberties(int x, int y)
+        {
+            #if DISABLE_GROUP_POINTS
+            return false;
+            #endif
+            return HasLiberties(GetGroupAt(x, y));
+        }
+
+        /// <summary>
+        /// Gets the liberty count of the specified group.
+        /// </summary>
+        /// <param name="group">The group object.</param>
+        /// <returns>The number of liberties of the specified group.</returns>
         public int GetLiberties(Group group)
         {
             #if DISABLE_GROUP_POINTS
@@ -422,8 +457,11 @@ namespace Go
 
         internal bool IsSuicide(int x, int y)
         {
+            if (HasLiberties(x, y))
+                return false;
+
             var capturedGroups = GetCapturedGroups(x, y);
-            if (capturedGroups.Count == 0 && GetLiberties(x, y) == 0) // Suicide move
+            if (capturedGroups.Count == 0)
                 return true;
 
             return false;
