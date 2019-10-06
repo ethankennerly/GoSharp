@@ -420,6 +420,15 @@ namespace Go
             CalcTerritory();
         }
 
+        internal bool IsSuicide(int x, int y)
+        {
+            var capturedGroups = GetCapturedGroups(x, y);
+            if (capturedGroups.Count == 0 && GetLiberties(x, y) == 0) // Suicide move
+                return true;
+
+            return false;
+        }
+
         internal List<Group> GetCapturedGroups(int x, int y)
         {
             List<Group> captures = new List<Group>();
