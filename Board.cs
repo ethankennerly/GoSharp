@@ -42,6 +42,11 @@ namespace Go
             return playerCellMask[playerIndex];
         }
 
+        public ulong GetContentMask()
+        {
+            return playerCellMask[0] + (playerCellMask[1] << 8);
+        }
+
         public static uint GetCellMask(int x, int y, int SizeX, int SizeY)
         {
             int cellIndex = y * SizeX + x;

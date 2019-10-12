@@ -14,12 +14,6 @@ namespace Go
     /// </summary>
     public class Game
     {
-        /// <summary>
-        /// The singleton comparer for super-ko cases. There is no need for more than
-        /// one instance of this.
-        /// </summary>
-        public static readonly SuperKoComparer SuperKoComparer = new SuperKoComparer();
-
         private static Dictionary<string, Content> SGFPropToColor = new Dictionary<string, Content>()
         {
             { "AE", Content.Empty },
@@ -32,13 +26,19 @@ namespace Go
 
         private static HashSet<string> PropertiesToExclude = new HashSet<string> { "W", "B", "AE", "AB", "AW" };
 
-        private static ObjectPool<Board> s_BoardPool;
+        public static ObjectPool<Game> GamePool;
+        public static ObjectPool<Board> BoardPool;
 
         public static void InitPools()
         {
-            if (ObjectPool<Board>.TryInit(1) || s_BoardPool == null)
+            if (ObjectPool<Game>.TryInit(8) || GamePool == null)
             {
-                s_BoardPool = ObjectPool<Board>.Shared;
+                GamePool = ObjectPool<Game>.Shared;
+            }
+
+            if (ObjectPool<Board>.TryInit(1) || BoardPool == null)
+            {
+                BoardPool = ObjectPool<Board>.Shared;
             }
 
             Board.InitPools();
@@ -124,7 +124,7 @@ namespace Go
             return score < otherScore ? 0.0 : (score > otherScore ? 1.0 : 0.5);
         }
 
-        private HashSet<Board> superKoSet = new HashSet<Board>(SuperKoComparer);
+        private HashSet<ulong> superKoSet = new HashSet<ulong>();
         private List<SGFProperty> sgfProperties = new List<SGFProperty>();
         private Dictionary<Content, Group> setupMoves = null;
 
@@ -250,18 +250,24 @@ namespace Go
             CreateGameTree(sgfGameTree, this);
         }
 
+        public Game()
+        {
+        }
+
         /// <summary>
         /// Constructs a Game object from an existing Game object. This constructor is used when making
         /// game moves.
         /// </summary>
         /// <param name="fromGame">The Game object before the move.</param>
         /// <param name="cloneTurn">Otherwise, sets opposite turn.</param>
-        public Game(Game fromGame, bool cloneTurn = false)
+        public void Clone(Game fromGame, bool cloneTurn = false)
         {
             m_NumPasses = fromGame.m_NumPasses;
             m_Ended = fromGame.Ended;
             GameInfo = fromGame.GameInfo;
-            Board = new Board(fromGame.Board);
+
+            Board = BoardPool.Rent();
+            Board.Clone(fromGame.Board);
             if (cloneTurn)
             {
                 Turn = fromGame.Turn;
@@ -274,6 +280,7 @@ namespace Go
             captures[Content.White] = fromGame.captures[Content.White];
             captures[Content.Black] = fromGame.captures[Content.Black];
             #endif
+            superKoSet.Clear();
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
             Root = fromGame.Root;
         }
@@ -406,10 +413,9 @@ namespace Go
             if (m_NumPasses > 0)
                 m_NumPasses--;
 
-            var g = new Game(this);
-            legal = g.InternalMakeMove(x, y);
-            moves.Add(new Variation(new Point(x, y), g));
-            return g;
+            Turn = Turn.Opposite();
+            legal = InternalMakeMove(x, y);
+            return this;
         }
 
         private const int kMaxPasses = 1;
@@ -436,9 +442,8 @@ namespace Go
             {
                 Board.IsScoring = true;
             }
-            var g = new Game(this);
-            moves.Add(new Variation(Game.PassMove, g));
-            return g;
+            Turn = Turn.Opposite();
+            return this;
         }
 
         /// <summary>
@@ -534,12 +539,10 @@ namespace Go
                 legal = false;
             }
             else captures[oturn] += Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
-            if (superKoSet != null)
-            {
-                if (superKoSet.Contains(Board, SuperKoComparer)) // Violates super-ko
-                    legal = false;
-                superKoSet.Add(Board);
-            }
+
+            if (!superKoSet.Add(Board.GetContentMask())) // Violates super-ko
+                legal = false;
+            
             IsLegal = legal;
             Board.GroupListPool.Return(capturedGroups);
             return legal;
@@ -571,13 +574,13 @@ namespace Go
                     if (Board[x, y] != Content.Empty)
                         continue;
 
-                    Board hypotheticalBoard = s_BoardPool.Rent();
+                    Board hypotheticalBoard = BoardPool.Rent();
                     List<Group> capturedGroups = Board.GroupListPool.Rent();
                     Board.GetHypotheticalCapturedGroups(hypotheticalBoard, capturedGroups, x, y, turn);
                     if (capturedGroups.Count == 0 && !hypotheticalBoard.HasLiberties(x, y)) // Suicide move
                     {
                         Board.GroupListPool.Return(capturedGroups);
-                        s_BoardPool.Return(hypotheticalBoard);
+                        BoardPool.Return(hypotheticalBoard);
 
                         continue;
                     }
@@ -585,18 +588,17 @@ namespace Go
                     if (capturedGroups.Count != 0)
                     {
                         hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
-                        if (superKoSet != null &&
-                            superKoSet.Contains(hypotheticalBoard, SuperKoComparer)) // Violates super-ko
+                        if (superKoSet.Contains(hypotheticalBoard.GetContentMask())) // Violates super-ko
                         {
                             Board.GroupListPool.Return(capturedGroups);
-                            s_BoardPool.Return(hypotheticalBoard);
+                            BoardPool.Return(hypotheticalBoard);
                             continue;
                         }
                     }
 
                     moves.Add(new Point(x, y));
                     Board.GroupListPool.Return(capturedGroups);
-                    s_BoardPool.Return(hypotheticalBoard);
+                    BoardPool.Return(hypotheticalBoard);
                 }
             }
 
