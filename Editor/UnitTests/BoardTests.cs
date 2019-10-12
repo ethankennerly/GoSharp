@@ -39,14 +39,14 @@ namespace Go.UnitTests
                 board.GetHypotheticalCapturedGroups(
                     hypotheticalBoard, capturedGroups, x, y, Content.Black);
                 int numCaptures = capturedGroups.Count;
-                int numLiberties = hypotheticalBoard.GetLiberties(x, y);
+                bool hasLiberties = hypotheticalBoard.HasLiberties(x, y);
                 Board.GroupListPool.Return(capturedGroups);
                 ObjectPool<Board>.Shared.Return(hypotheticalBoard);
 
                 Assert.AreEqual(0, numCaptures,
                     "y: " + y);
-                Assert.AreEqual((y % 2) + 1, numLiberties,
-                    "Num liberties at y: " + y);
+                Assert.IsTrue(hasLiberties,
+                    "Has liberties at y: " + y);
             }
         }
     }

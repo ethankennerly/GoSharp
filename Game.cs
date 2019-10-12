@@ -528,7 +528,7 @@ namespace Go
             List<Group> capturedGroups = Board.GroupListPool.Rent();
             capturedGroups.Clear();
             Board.GetCapturedGroups(x, y, capturedGroups);
-            if (capturedGroups.Count == 0 && Board.GetLiberties(x, y) == 0) // Suicide move
+            if (capturedGroups.Count == 0 && !Board.HasLiberties(x, y)) // Suicide move
             {
                 captures[Turn] += Board.Capture(Board.GetGroupAt(x, y));
                 legal = false;
@@ -574,7 +574,7 @@ namespace Go
                     Board hypotheticalBoard = s_BoardPool.Rent();
                     List<Group> capturedGroups = Board.GroupListPool.Rent();
                     Board.GetHypotheticalCapturedGroups(hypotheticalBoard, capturedGroups, x, y, turn);
-                    if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
+                    if (capturedGroups.Count == 0 && !hypotheticalBoard.HasLiberties(x, y)) // Suicide move
                     {
                         Board.GroupListPool.Return(capturedGroups);
                         s_BoardPool.Return(hypotheticalBoard);

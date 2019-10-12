@@ -288,18 +288,20 @@ namespace Go
         public Content GetContentAt(int x, int y)
         {
             uint cellMask = GetCellMask(x, y, SizeX, SizeY);
+            Content content;
             if ((playerCellMask[kBlackIndex] & cellMask) != 0)
-                return Content.Black;
-            if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
-                return Content.White;
-            return Content.Empty;
+                content = Content.Black;
+            else if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
+                content = Content.White;
+            else
+                content = Content.Empty;
 
             #if !DISABLE_GROUP_POINTS
-            if (IsScoring && this[x, y] != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
+            if (IsScoring && content != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
                 return Content.Empty;
             #endif
 
-            return this[x, y];
+            return content;
         }
 
         public Content GetContentAt(int cellIndex)
@@ -444,53 +446,6 @@ namespace Go
             return HasLiberties(GetGroupAt(x, y));
         }
 
-        /// <summary>
-        /// Gets the liberty count of the specified group.
-        /// </summary>
-        /// <param name="group">The group object.</param>
-        /// <returns>The number of liberties of the specified group.</returns>
-        public int GetLiberties(Group group)
-        {
-            #if DISABLE_GROUP_POINTS
-            return 0;
-            #endif
-            if (group.Content == Content.Empty)
-                return group.NumPoints();
-
-            int libs = 0;
-            foreach (var n in group.Neighbours)
-            {
-                if (GetContentAt(n) == Content.Empty) libs++;
-            }
-            return libs;
-        }
-
-        /// <summary>
-        /// Gets the liberty count of the group containing the board content at
-        /// the specified point.
-        /// </summary>
-        /// <param name="x">The X coordinate of the position.</param>
-        /// <param name="y">The Y coordinate of the position.</param>
-        /// <returns>The number of liberties.</returns>
-        public int GetLiberties(int x, int y)
-        {
-            #if DISABLE_GROUP_POINTS
-            return 0;
-            #endif
-            return GetLiberties(GetGroupAt(x, y));
-        }
-
-        /// <summary>
-        /// Gets the liberty count of the group containing the board content at
-        /// the specified point.
-        /// </summary>
-        /// <param name="n">The coordinates of the position.</param>
-        /// <returns>The number of liberties.</returns>
-        public int GetLiberties(Point n)
-        {
-            return GetLiberties(n.x, n.y);
-        }
-
         private void CalcTerritory()
         {
             #if DISABLE_CALC_TERRITORY
@@ -587,7 +542,7 @@ namespace Go
                 {
                     Group ngroup = GetGroupAt(n);
                     if (ngroup.ContainsPoint(x, y)) continue; // Don't consider self group
-                    if (GetLiberties(ngroup) == 0)
+                    if (!HasLiberties(ngroup))
                     {
                         if (!ngroup.AnyPointsIntersect(captures))
                             captures.Add(ngroup);

@@ -45,7 +45,6 @@ namespace Go
         public int NumNeighbours()
         {
             return CountBits(neighboursMask);
-            return neighbours.Count();
         }
 
         public bool AnyPointsIntersect(List<Group> groups)
@@ -69,17 +68,6 @@ namespace Go
             get
             {
                 return neighbours;
-            }
-        }
-
-        /// <summary>
-        /// Gets an enumerator for the coordinates contained in this group.
-        /// </summary>
-        public IEnumerable<Point> Points
-        {
-            get
-            {
-                return points;
             }
         }
 
@@ -123,7 +111,6 @@ namespace Go
         public void AddPoint(int x, int y)
         {
             pointsMask |= Board.GetCellMask(x, y, SizeX, SizeY);
-            points.Add(new Point(x, y));
         }
 
         /// <summary>
@@ -135,7 +122,6 @@ namespace Go
         public bool ContainsPoint(int x, int y)
         {
             return (pointsMask & Board.GetCellMask(x, y, SizeX, SizeY)) > 0;
-            // return points.Contains(new Point(x, y));
         }
 
         /// <summary>
