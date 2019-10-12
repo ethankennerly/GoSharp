@@ -42,9 +42,14 @@ namespace Go
             return playerCellMask[playerIndex];
         }
 
+        public uint GetEmptyMask()
+        {
+            return ~(playerCellMask[kBlackIndex] | playerCellMask[kWhiteIndex]);
+        }
+
         public ulong GetContentMask()
         {
-            return playerCellMask[0] + (playerCellMask[1] << 8);
+            return playerCellMask[kBlackIndex] + (playerCellMask[kWhiteIndex] << 8);
         }
 
         public static uint GetCellMask(int x, int y, int SizeX, int SizeY)
@@ -92,6 +97,7 @@ namespace Go
 
         /// <summary>
         /// Gets the horizontal size of the board.
+        /// Limited to 5x5 for optimization.
         /// </summary>
         private int _SizeX;
         public int SizeX {
@@ -105,6 +111,7 @@ namespace Go
 
         /// <summary>
         /// Gets the vertical size of the board.
+        /// Limited to 5x5 for optimization.
         /// </summary>
         private int _SizeY;
         public int SizeY {
@@ -173,12 +180,12 @@ namespace Go
                 var emptyGroups = groupCache.Where(x => x.Content == Content.Empty);
                 foreach (var p in emptyGroups)
                 {
-                    if (p.Neighbours.All(x => GetContentAt(x) != Content.Black))
+                    if (!p.AnyNeighbour(playerCellMask[kBlackIndex]))
                     {
                         w += p.NumPoints();
                         p.Territory = Content.White;
                     }
-                    else if (p.Neighbours.All(x => GetContentAt(x) != Content.White))
+                    else if (!p.AnyNeighbour(playerCellMask[kWhiteIndex]))
                     {
                         b += p.NumPoints();
                         p.Territory = Content.Black;
@@ -429,11 +436,7 @@ namespace Go
             if (group.Content == Content.Empty)
                 return group.NumPoints() > 0;
 
-            foreach (var n in group.Neighbours)
-            {
-                if (GetContentAt(n) == Content.Empty) return true;
-            }
-            return false;
+            return group.AnyNeighbour(GetEmptyMask());
         }
 
         /// <summary>

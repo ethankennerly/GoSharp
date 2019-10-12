@@ -60,23 +60,10 @@ namespace Go
             return false;
         }
 
-        private HashSet<Point> neighbours = Point.CreateHashSet();
-
         /// <summary>
         /// Gets the content of the group.
         /// </summary>
         public Content Content { get; set; }
-
-        /// <summary>
-        /// Gets an enumerator for the neighboring coordinates of the group.
-        /// </summary>
-        public IEnumerable<Point> Neighbours
-        {
-            get
-            {
-                return neighbours;
-            }
-        }
 
         /// <summary>
         /// Gets or sets whether this group is dead for the purposes of scoring.
@@ -96,7 +83,6 @@ namespace Go
         {
             pointsMask = 0;
             neighboursMask = 0;
-            neighbours.Clear();
             IsDead = false;
         }
 
@@ -127,7 +113,7 @@ namespace Go
         /// <returns>Returns true if the point is contained in the group.</returns>
         public bool ContainsPoint(int x, int y)
         {
-            return (pointsMask & Board.GetCellMask(x, y, SizeX, SizeY)) > 0;
+            return (pointsMask & Board.GetCellMask(x, y, SizeX, SizeY)) != 0;
         }
 
         /// <summary>
@@ -137,8 +123,12 @@ namespace Go
         /// <param name="y">The Y coordinate of the neighbour.</param>
         public void AddNeighbour(int x, int y)
         {
-            neighbours.Add(new Point(x, y));
             neighboursMask |= Board.GetCellMask(x, y, SizeX, SizeY);
+        }
+
+        public bool AnyNeighbour(uint contentMask)
+        {
+            return (neighboursMask & contentMask) != 0;
         }
     }
 }
