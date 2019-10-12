@@ -266,7 +266,7 @@ namespace Go
             m_Ended = fromGame.Ended;
             GameInfo = fromGame.GameInfo;
 
-            Board = BoardPool.Rent();
+            Board = new Board();
             Board.Clone(fromGame.Board);
             if (cloneTurn)
             {
@@ -413,9 +413,10 @@ namespace Go
             if (m_NumPasses > 0)
                 m_NumPasses--;
 
-            Turn = Turn.Opposite();
-            legal = InternalMakeMove(x, y);
-            return this;
+            var g = new Game();
+            g.Clone(this);
+            legal = g.InternalMakeMove(x, y);
+            return g;
         }
 
         private const int kMaxPasses = 1;
@@ -442,8 +443,9 @@ namespace Go
             {
                 Board.IsScoring = true;
             }
-            Turn = Turn.Opposite();
-            return this;
+            var g = new Game();
+            g.Clone(this);
+            return g;
         }
 
         /// <summary>
