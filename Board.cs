@@ -209,6 +209,22 @@ namespace Go
             IsScoring = fromBoard.IsScoring;
         }
 
+        public void Clone(Board fromBoard)
+        {
+            if (SizeX != fromBoard.SizeX || SizeY != fromBoard.SizeY)
+            {
+                SizeX = fromBoard.SizeX;
+                SizeY = fromBoard.SizeY;
+                #if DISABLE_ARRAY_COPY
+                content = fromBoard.content;
+                #else
+                content = new Content[SizeX, SizeY];
+                #endif
+            }
+            Array.Copy(fromBoard.content, content, content.Length);
+            IsScoring = fromBoard.IsScoring;
+        }
+
         /// <summary>
         /// Construct a board object from a parameter array. Each parameter may be
         /// 0 for empty, 1 for black or 2 for white, and the number of parameters must

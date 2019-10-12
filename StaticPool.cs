@@ -40,7 +40,10 @@ namespace FineGameDesign.Pooling
         /// </remarks>
         private T[] m_Elements;
 
-        private int m_RentIndex;
+        /// <remarks>
+        /// Direct access to reset in bulk by setting RentIndex to 0.
+        /// </remarks>
+        public int RentIndex;
 
         public StaticPool(int length)
         {
@@ -57,12 +60,15 @@ namespace FineGameDesign.Pooling
         /// </summary>
         public T Rent()
         {
-            return m_Elements[m_RentIndex++];
+            return m_Elements[RentIndex++];
         }
 
+        /// <summary>
+        /// Only valid if returned element is the last one rented.
+        /// </summary>
         public void Return()
         {
-            m_RentIndex--;
+            RentIndex--;
         }
     }
 }

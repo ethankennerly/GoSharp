@@ -32,9 +32,14 @@ namespace Go
 
         private static HashSet<string> PropertiesToExclude = new HashSet<string> { "W", "B", "AE", "AB", "AW" };
 
+        private static StaticPool<Board> s_BoardPool;
+
         public static void InitPools()
         {
-            StaticPool<Board>.TryInit(32);
+            if (StaticPool<Board>.TryInit(32))
+            {
+                s_BoardPool = StaticPool<Board>.Shared;
+            }
         }
 
         static Game()
@@ -553,6 +558,9 @@ namespace Go
 
             List<Point> moves = new List<Point>();
             Content turn = cloneTurn ? Turn : Turn.Opposite();
+
+            s_BoardPool.RentIndex = 0;
+
             for (int x = 0; x < Board.SizeX; x++)
             {
                 for (int y = 0; y < Board.SizeY; y++)
@@ -560,7 +568,8 @@ namespace Go
                     if (Board[x, y] != Content.Empty)
                         continue;
 
-                    Board hypotheticalBoard = new Board(Board);
+                    Board hypotheticalBoard = s_BoardPool.Rent();
+                    hypotheticalBoard.Clone(Board);
                     hypotheticalBoard[x, y] = turn;
                     var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
                     if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
@@ -577,6 +586,8 @@ namespace Go
                     moves.Add(new Point(x, y));
                 }
             }
+
+            s_BoardPool.RentIndex = 0;
 
             if (moves.Count == 0 || m_NumPasses > 0)
             {
