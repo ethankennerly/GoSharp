@@ -15,12 +15,7 @@ namespace Go.UnitTests
             Game.InitPools();
             Game game = new Game(new Board(1, 3), Content.Black);
 
-            Stopwatch timePerLegalMoves = new Stopwatch();
-            timePerLegalMoves.Start();
             List<Point> moves = game.GetLegalMoves(true);
-            timePerLegalMoves.Stop();
-            long millisecondsPerLegalMoves = timePerLegalMoves.ElapsedMilliseconds;
-
             List<Point> threeMoves = new List<Point>()
             {
                 new Point(0, 0),
@@ -29,7 +24,14 @@ namespace Go.UnitTests
             };
             Assert.AreEqual(threeMoves, moves);
 
-            Debug.Log("GetLegalMovesOn1x3: " + millisecondsPerLegalMoves + "ms");
+            game = game.MakeMove(threeMoves[1]);
+            moves = game.GetLegalMoves(true);
+            List<Point> passMoves = new List<Point>()
+            {
+                new Point(-1, -1)
+            };
+            Assert.AreEqual(passMoves, moves,
+                "After play center. Board:\n" + game.Board.ToString());
         }
     }
 }

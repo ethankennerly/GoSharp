@@ -615,11 +615,9 @@ namespace Go
             }
             return rc;
         }
+
         internal int Capture(Group g)
         {
-            foreach (var p in g.Points)
-                SetContentAt(p, Content.Empty);
-
             SetEmptyContentMask(g.PointsMask);
 
             return g.NumPoints();
