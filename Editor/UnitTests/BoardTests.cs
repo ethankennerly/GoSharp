@@ -31,18 +31,22 @@ namespace Go.UnitTests
             ObjectPool<Board>.TryInit(1);
             Board.InitPools();
             Board board = new Board(1, 3);
+            int x = 0;
             for (int y = 0; y < 3; ++y)
             {
                 Board hypotheticalBoard = ObjectPool<Board>.Shared.Rent();
                 List<Group> capturedGroups = Board.GroupListPool.Rent();
                 board.GetHypotheticalCapturedGroups(
-                    hypotheticalBoard, capturedGroups, 0, y, Content.Black);
+                    hypotheticalBoard, capturedGroups, x, y, Content.Black);
                 int numCaptures = capturedGroups.Count;
+                int numLiberties = hypotheticalBoard.GetLiberties(x, y);
                 Board.GroupListPool.Return(capturedGroups);
                 ObjectPool<Board>.Shared.Return(hypotheticalBoard);
 
                 Assert.AreEqual(0, numCaptures,
                     "y: " + y);
+                Assert.AreEqual((y % 2) + 1, numLiberties,
+                    "Num liberties at y: " + y);
             }
         }
     }
