@@ -215,15 +215,7 @@ namespace Go
         /// <param name="fromBoard">The source board object.</param>
         public Board(Board fromBoard)
         {
-            SizeX = fromBoard.SizeX;
-            SizeY = fromBoard.SizeY;
-            #if DISABLE_ARRAY_COPY
-            // content = fromBoard.content;
-            #else
-            // content = new Content[SizeX, SizeY];
-            // Array.Copy (fromBoard.content, content, content.Length);
-            #endif
-            IsScoring = fromBoard.IsScoring;
+            Clone(fromBoard);
         }
 
         public void Clone(Board fromBoard)

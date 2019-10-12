@@ -36,7 +36,7 @@ namespace Go
 
         public static void InitPools()
         {
-            if (ObjectPool<Board>.TryInit(1))
+            if (ObjectPool<Board>.TryInit(1) || s_BoardPool == null)
             {
                 s_BoardPool = ObjectPool<Board>.Shared;
             }
