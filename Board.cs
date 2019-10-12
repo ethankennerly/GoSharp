@@ -410,7 +410,14 @@ namespace Go
             {
                 groupCache = GroupListPool.Rent();
                 groupCache.Clear();
-                groupCache2 = new Group[SizeX, SizeY];
+                if (groupCache2 == null)
+                {
+                    groupCache2 = new Group[SizeX, SizeY];
+                }
+                else
+                {
+                    Array.Clear(groupCache2, 0, groupCache2.Length);
+                }
             }
             Group group = groupCache.SingleOrDefault(z => z.ContainsPoint(x, y));
             if (group == null)
