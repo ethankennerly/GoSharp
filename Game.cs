@@ -270,7 +270,7 @@ namespace Go
         /// </summary>
         /// <param name="bs">The source Board.</param>
         /// <param name="turn">The color of the player whose turn it is to play.</param>
-        protected Game(Board bs, Content turn)
+        public Game(Board bs, Content turn)
         {
             Board = new Board(bs);
             Turn = turn;

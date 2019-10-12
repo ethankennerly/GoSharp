@@ -20,6 +20,11 @@ namespace Go
         /// </summary>
         private uint[] playerCellMask = new uint[2];
 
+        public uint GetContentMask(int playerIndex)
+        {
+            return playerCellMask[playerIndex];
+        }
+
         public static uint GetCellMask(int x, int y, int SizeX, int SizeY)
         {
             int cellIndex = y * SizeX + x;
