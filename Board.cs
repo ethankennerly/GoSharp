@@ -204,7 +204,7 @@ namespace Go
         /// <param name="sy">The vertical size of the board.</param>
         public Board(int sx, int sy)
         {
-            content = new Content[sx, sy];
+            // content = new Content[sx, sy];
             SizeX = sx;
             SizeY = sy;
         }
@@ -218,10 +218,10 @@ namespace Go
             SizeX = fromBoard.SizeX;
             SizeY = fromBoard.SizeY;
             #if DISABLE_ARRAY_COPY
-            content = fromBoard.content;
+            // content = fromBoard.content;
             #else
-            content = new Content[SizeX, SizeY];
-            Array.Copy (fromBoard.content, content, content.Length);
+            // content = new Content[SizeX, SizeY];
+            // Array.Copy (fromBoard.content, content, content.Length);
             #endif
             IsScoring = fromBoard.IsScoring;
         }
@@ -232,45 +232,10 @@ namespace Go
             {
                 SizeX = fromBoard.SizeX;
                 SizeY = fromBoard.SizeY;
-                #if DISABLE_ARRAY_COPY
-                content = fromBoard.content;
-                #else
-                content = new Content[SizeX, SizeY];
-                #endif
             }
-            Array.Copy(fromBoard.content, content, content.Length);
+            Array.Copy(fromBoard.playerCellMask, playerCellMask, fromBoard.playerCellMask.Length);
             IsScoring = fromBoard.IsScoring;
             ClearGroupCache();
-        }
-
-        /// <summary>
-        /// Construct a board object from a parameter array. Each parameter may be
-        /// 0 for empty, 1 for black or 2 for white, and the number of parameters must
-        /// be a square of a natural number. The board size will be a square whose side
-        /// length is the square root of the number of parameters.
-        /// </summary>
-        /// <param name="c">The board content (0-empty, 1-black, 2-white).</param>
-        public Board(params int[] c)
-        {
-            if (c.Length == 0)
-                throw new InvalidOperationException("Must provide some arguments.");
-            double d = Math.Sqrt(c.Length);
-            int id = (int)d;
-            if (id != d)
-                throw new InvalidOperationException("Argument count must be a square of a natural number.");
-            SizeX = SizeY = id;
-            content = new Content[id, id];
-            int y = 0, x = 0;
-            for (int i = 0; i < c.Length; i++)
-            {
-                content[x, y] = (Content)c[i];
-                x++;
-                if (x == SizeX)
-                {
-                    x = 0;
-                    y++;
-                }
-            }
         }
 
         /// <summary>
@@ -330,27 +295,23 @@ namespace Go
         /// <returns></returns>
         public Content GetContentAt(int x, int y)
         {
-            #if !DISABLE_GROUP_POINTS
-            if (IsScoring && content[x, y] != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
-                return Content.Empty;
-            #endif
-
-            return content[x, y];
-
             uint cellMask = GetCellMask(x, y, SizeX, SizeY);
             if ((playerCellMask[kBlackIndex] & cellMask) != 0)
                 return Content.Black;
             if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
                 return Content.White;
             return Content.Empty;
+
+            #if !DISABLE_GROUP_POINTS
+            if (IsScoring && this[x, y] != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
+                return Content.Empty;
+            #endif
+
+            return this[x, y];
         }
 
         public Content GetContentAt(int cellIndex)
         {
-            int x = cellIndex % SizeX;
-            int y = cellIndex / SizeX;
-            return content[x, y];
-
             uint cellMask = (uint)(1 << cellIndex);
             if ((playerCellMask[kBlackIndex] & cellMask) != 0)
                 return Content.Black;
@@ -387,11 +348,11 @@ namespace Go
             {
                 throw new ArgumentOutOfRangeException("y", "Invalid y coordinate.");
             }
-            content[x, y] = c;
-            _Hash = null;
-            ClearGroupCache();
 
             SetContentMask(x, y, c);
+            _Hash = null;
+
+            ClearGroupCache();
         }
 
         /// <summary>
@@ -431,7 +392,7 @@ namespace Go
             {
                 group = GroupPool.Rent();
                 group.Clear();
-                group.Content = content[x, y];
+                group.Content = this[x, y];
                 RecursiveAddPoint(group, x, y);
                 groupCache.Add(group);
             }
@@ -613,7 +574,16 @@ namespace Go
             return false;
         }
 
-        internal void GetCapturedGroups(int x, int y, List<Group> captures)
+        public void GetHypotheticalCapturedGroups(
+            Board hypotheticalBoard, List<Group> capturedGroups, int x, int y, Content turn)
+        {
+            hypotheticalBoard.Clone(this);
+            hypotheticalBoard[x, y] = turn;
+            capturedGroups.Clear();
+            hypotheticalBoard.GetCapturedGroups(x, y, capturedGroups);
+        }
+
+        public void GetCapturedGroups(int x, int y, List<Group> captures)
         {
             #if DISABLE_GROUP_POINTS
             return captures;
@@ -678,14 +648,7 @@ namespace Go
 
         private int GetContentHashCode()
         {
-            int hc = 0, tmp;
-            foreach (var i in content)
-            {
-                tmp = hc >> 30;
-                hc <<= 2;
-                hc ^= (int)i ^ tmp;
-            }
-            return hc;
+            return (int)(playerCellMask[0] + playerCellMask[1]);
         }
 
         /// <summary>
@@ -706,8 +669,8 @@ namespace Go
             {
                 for (int j = 0; j < SizeX; j++)
                 {
-                    if (content[j, i] == Content.Empty) rc += ".";
-                    else if (content[j, i] == Content.Black) rc += "X";
+                    if (this[j, i] == Content.Empty) rc += ".";
+                    else if (this[j, i] == Content.Black) rc += "X";
                     else rc += "O";
                     if (IsScoring)
                     {
@@ -769,10 +732,10 @@ namespace Go
                 {
                     for (int j = 0; j < SizeY; j++)
                     {
-                        if (content[i, j] != Content.Empty)
+                        if (this[i, j] != Content.Empty)
                             yield return new PositionContent
                             {
-                                Content = content[i, j],
+                                Content = this[i, j],
                                 Position = new Point(i, j)
                             };
                     }
@@ -790,7 +753,7 @@ namespace Go
                     {
                         yield return new PositionContent
                         {
-                            Content = content[i, j],
+                            Content = this[i, j],
                             Position = new Point(i, j)
                         };
                     }
@@ -837,7 +800,7 @@ namespace Go
                 {
                     for (int j = 0; j < SizeY; j++)
                     {
-                        if (content[i, j] == Content.Empty)
+                        if (this[i, j] == Content.Empty)
                             yield return new Point(i, j);
                     }
                 }

@@ -572,11 +572,8 @@ namespace Go
                         continue;
 
                     Board hypotheticalBoard = s_BoardPool.Rent();
-                    hypotheticalBoard.Clone(Board);
-                    hypotheticalBoard[x, y] = turn;
                     List<Group> capturedGroups = Board.GroupListPool.Rent();
-                    capturedGroups.Clear();
-                    hypotheticalBoard.GetCapturedGroups(x, y, capturedGroups);
+                    Board.GetHypotheticalCapturedGroups(hypotheticalBoard, capturedGroups, x, y, turn);
                     if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
                     {
                         Board.GroupListPool.Return(capturedGroups);

@@ -40,7 +40,6 @@ namespace Go
         public int NumPoints()
         {
             return CountBits(pointsMask);
-            // return points.Count();
         }
 
         public int NumNeighbours()
