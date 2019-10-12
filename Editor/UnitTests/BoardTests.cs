@@ -16,19 +16,13 @@ namespace Go.UnitTests
             Board.InitPools();
             Board board = new Board(1, 3);
 
-            Stopwatch timePerCapturedGroups = new Stopwatch();
-            timePerCapturedGroups.Start();
             List<Group> capturedGroups = Board.GroupListPool.Rent();
             capturedGroups.Clear();
             board.GetCapturedGroups(0, 1, capturedGroups);
             int numCaptures = capturedGroups.Count;
             Board.GroupListPool.Return(capturedGroups);
-            timePerCapturedGroups.Stop();
-            long millisecondsPerCapturedGroups = timePerCapturedGroups.ElapsedMilliseconds;
 
             Assert.AreEqual(0, numCaptures);
-
-            Debug.Log("GetCapturedGroupsOn1x3: " + millisecondsPerCapturedGroups + "ms");
         }
 
         [Test]
@@ -37,15 +31,19 @@ namespace Go.UnitTests
             ObjectPool<Board>.TryInit(1);
             Board.InitPools();
             Board board = new Board(1, 3);
-            Board hypotheticalBoard = ObjectPool<Board>.Shared.Rent();
-            List<Group> capturedGroups = Board.GroupListPool.Rent();
-            board.GetHypotheticalCapturedGroups(
-                hypotheticalBoard, capturedGroups, 0, 1, Content.Black);
-            int numCaptures = capturedGroups.Count;
-            Board.GroupListPool.Return(capturedGroups);
-            ObjectPool<Board>.Shared.Return(hypotheticalBoard);
+            for (int y = 0; y < 3; ++y)
+            {
+                Board hypotheticalBoard = ObjectPool<Board>.Shared.Rent();
+                List<Group> capturedGroups = Board.GroupListPool.Rent();
+                board.GetHypotheticalCapturedGroups(
+                    hypotheticalBoard, capturedGroups, 0, y, Content.Black);
+                int numCaptures = capturedGroups.Count;
+                Board.GroupListPool.Return(capturedGroups);
+                ObjectPool<Board>.Shared.Return(hypotheticalBoard);
 
-            Assert.AreEqual(0, numCaptures);
+                Assert.AreEqual(0, numCaptures,
+                    "y: " + y);
+            }
         }
     }
 }
