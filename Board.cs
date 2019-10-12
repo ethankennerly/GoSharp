@@ -176,6 +176,10 @@ namespace Go
             }
         }
 
+        public Board()
+        {
+        }
+
         /// <summary>
         /// Constructs a board object of specified horizontal and vertical size.
         /// </summary>

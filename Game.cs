@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FineGameDesign.Pooling;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -30,6 +31,11 @@ namespace Go
         private static Dictionary<string, Func<Game, SGFProperty, Game>> PropertyHandlers = new Dictionary<string, Func<Game, SGFProperty, Game>>();
 
         private static HashSet<string> PropertiesToExclude = new HashSet<string> { "W", "B", "AE", "AB", "AW" };
+
+        public static void InitPools()
+        {
+            StaticPool<Board>.TryInit(32);
+        }
 
         static Game()
         {
