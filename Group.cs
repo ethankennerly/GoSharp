@@ -51,7 +51,7 @@ namespace Go
         {
             foreach (Group group in groups)
             {
-                if ((pointsMask & group.pointsMask) > 0)
+                if ((pointsMask & group.pointsMask) != 0)
                 {
                     return true;
                 }
