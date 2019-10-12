@@ -17,12 +17,18 @@ namespace Go
         private const Content kPlayer0 = Content.Black;
 
         public static ObjectPool<List<Group>> GroupListPool;
+        public static ObjectPool<Group> GroupPool;
 
         public static void InitPools()
         {
             if (ObjectPool<List<Group>>.TryInit(32))
             {
                 GroupListPool = ObjectPool<List<Group>>.Shared;
+            }
+
+            if (ObjectPool<Group>.TryInit(32))
+            {
+                GroupPool = ObjectPool<Group>.Shared;
             }
         }
 
@@ -422,7 +428,9 @@ namespace Go
             Group group = groupCache.SingleOrDefault(z => z.ContainsPoint(x, y));
             if (group == null)
             {
-                group = new Group(content[x, y]);
+                group = GroupPool.Rent();
+                group.Clear();
+                group.Content = content[x, y];
                 RecursiveAddPoint(group, x, y);
                 groupCache.Add(group);
             }
@@ -658,6 +666,10 @@ namespace Go
         {
             if (groupCache != null)
             {
+                foreach (Group group in groupCache)
+                {
+                    GroupPool.Return(group);
+                }
                 GroupListPool.Return(groupCache);
                 groupCache = null;
             }

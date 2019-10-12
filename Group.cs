@@ -60,7 +60,7 @@ namespace Go
         /// <summary>
         /// Gets the content of the group.
         /// </summary>
-        public Content Content { get; private set; }
+        public Content Content { get; set; }
 
         /// <summary>
         /// Gets an enumerator for the neighboring coordinates of the group.
@@ -93,6 +93,19 @@ namespace Go
         /// Gets the territory ownership color of this group of empty spaces.
         /// </summary>
         public Content Territory { get; internal set; }
+
+        public Group()
+        {
+        }
+
+        public void Clear()
+        {
+            pointsMask = 0;
+            neighboursMask = 0;
+            points.Clear();
+            neighbours.Clear();
+            IsDead = false;
+        }
 
         /// <summary>
         /// Constructs a group object of specified content.
