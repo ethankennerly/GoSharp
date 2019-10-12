@@ -209,7 +209,6 @@ namespace Go
         /// <param name="sy">The vertical size of the board.</param>
         public Board(int sx, int sy)
         {
-            // content = new Content[sx, sy];
             SizeX = sx;
             SizeY = sy;
         }
@@ -232,7 +231,67 @@ namespace Go
             }
             Array.Copy(fromBoard.playerCellMask, playerCellMask, fromBoard.playerCellMask.Length);
             IsScoring = fromBoard.IsScoring;
-            ClearGroupCache();
+
+            if (!TryCloneGroupCache(fromBoard))
+            {
+                ClearGroupCache();
+            }
+        }
+
+        private bool TryCloneGroupCache(Board fromBoard)
+        {
+            if (fromBoard.groupCache == null)
+            {
+                return false;
+            }
+
+            if (groupCache == null)
+            {
+                groupCache = GroupListPool.Rent();
+            }
+            groupCache.Clear();
+            foreach(Group fromGroup in fromBoard.groupCache)
+            {
+                Group group = GroupPool.Rent();
+                group.Clone(fromGroup);
+                groupCache.Add(group);
+            }
+
+            if (fromBoard.groupCache2 == null)
+            {
+                return false;
+            }
+
+            int numCells = fromBoard.groupCache2.Length;
+            int fromSizeX = fromBoard.SizeX;
+            int fromSizeY = fromBoard.SizeY;
+            if (groupCache2 == null ||
+                SizeX != fromSizeX ||
+                SizeY != fromSizeY)
+            {
+                groupCache2 = new Group[fromSizeX, fromSizeY];
+            }
+            for (int x = 0; x < fromSizeX; ++x)
+            {
+                for (int y = 0; y < fromSizeY; ++y)
+                {
+                    Group fromGroup = fromBoard.groupCache2[x, y];
+                    Group group;
+                    if (fromGroup == null)
+                    {
+                        group = null;
+                    }
+                    else
+                    {
+                        int fromIndex = fromBoard.groupCache.IndexOf(fromGroup);
+                        group = groupCache[fromIndex];
+                    }
+
+                    groupCache2[x, y] = group;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

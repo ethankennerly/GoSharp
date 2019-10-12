@@ -92,6 +92,19 @@ namespace Go
         {
         }
 
+        public void Clone(Group fromGroup)
+        {
+            pointsMask = fromGroup.pointsMask;
+            neighboursMask = fromGroup.neighboursMask;
+            neighbours.Clear();
+            foreach (Point point in fromGroup.neighbours)
+            {
+                neighbours.Add(point);
+            }
+            IsDead = fromGroup.IsDead;
+            Content = fromGroup.Content;
+        }
+
         public void Clear()
         {
             pointsMask = 0;
