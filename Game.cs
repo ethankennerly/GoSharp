@@ -32,14 +32,16 @@ namespace Go
 
         private static HashSet<string> PropertiesToExclude = new HashSet<string> { "W", "B", "AE", "AB", "AW" };
 
-        private static StaticPool<Board> s_BoardPool;
+        private static ObjectPool<Board> s_BoardPool;
 
         public static void InitPools()
         {
-            if (StaticPool<Board>.TryInit(32))
+            if (ObjectPool<Board>.TryInit(1))
             {
-                s_BoardPool = StaticPool<Board>.Shared;
+                s_BoardPool = ObjectPool<Board>.Shared;
             }
+
+            Board.InitPools();
         }
 
         static Game()
@@ -523,7 +525,9 @@ namespace Go
             if (Board[x, y] != Content.Empty) legal = false; // Overwrite move
             Board[x, y] = oturn;
             Move = new Point(x, y);
-            var capturedGroups = Board.GetCapturedGroups(x, y);
+            List<Group> capturedGroups = Board.GroupListPool.Rent();
+            capturedGroups.Clear();
+            Board.GetCapturedGroups(x, y, capturedGroups);
             if (capturedGroups.Count == 0 && Board.GetLiberties(x, y) == 0) // Suicide move
             {
                 captures[Turn] += Board.Capture(Board.GetGroupAt(x, y));
@@ -537,6 +541,7 @@ namespace Go
                 superKoSet.Add(Board);
             }
             IsLegal = legal;
+            Board.GroupListPool.Return(capturedGroups);
             return legal;
         }
 
@@ -559,8 +564,6 @@ namespace Go
             List<Point> moves = new List<Point>();
             Content turn = cloneTurn ? Turn : Turn.Opposite();
 
-            s_BoardPool.RentIndex = 0;
-
             for (int x = 0; x < Board.SizeX; x++)
             {
                 for (int y = 0; y < Board.SizeY; y++)
@@ -571,23 +574,34 @@ namespace Go
                     Board hypotheticalBoard = s_BoardPool.Rent();
                     hypotheticalBoard.Clone(Board);
                     hypotheticalBoard[x, y] = turn;
-                    var capturedGroups = hypotheticalBoard.GetCapturedGroups(x, y);
+                    List<Group> capturedGroups = Board.GroupListPool.Rent();
+                    capturedGroups.Clear();
+                    hypotheticalBoard.GetCapturedGroups(x, y, capturedGroups);
                     if (capturedGroups.Count == 0 && hypotheticalBoard.GetLiberties(x, y) == 0) // Suicide move
+                    {
+                        Board.GroupListPool.Return(capturedGroups);
+                        s_BoardPool.Return(hypotheticalBoard);
+
                         continue;
+                    }
 
                     if (capturedGroups.Count != 0)
                     {
                         hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
                         if (superKoSet != null &&
                             superKoSet.Contains(hypotheticalBoard, SuperKoComparer)) // Violates super-ko
+                        {
+                            Board.GroupListPool.Return(capturedGroups);
+                            s_BoardPool.Return(hypotheticalBoard);
                             continue;
+                        }
                     }
 
                     moves.Add(new Point(x, y));
+                    Board.GroupListPool.Return(capturedGroups);
+                    s_BoardPool.Return(hypotheticalBoard);
                 }
             }
-
-            s_BoardPool.RentIndex = 0;
 
             if (moves.Count == 0 || m_NumPasses > 0)
             {

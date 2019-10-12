@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FineGameDesign.Pooling;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,16 @@ namespace Go
         private const int kBlackIndex = 0;
         private const int kWhiteIndex = 1;
         private const Content kPlayer0 = Content.Black;
+
+        public static ObjectPool<List<Group>> GroupListPool;
+
+        public static void InitPools()
+        {
+            if (ObjectPool<List<Group>>.TryInit(32))
+            {
+                GroupListPool = ObjectPool<List<Group>>.Shared;
+            }
+        }
 
         /// <summary>
         /// Only valid for 32 cells or less.
@@ -223,6 +234,7 @@ namespace Go
             }
             Array.Copy(fromBoard.content, content, content.Length);
             IsScoring = fromBoard.IsScoring;
+            ClearGroupCache();
         }
 
         /// <summary>
@@ -396,7 +408,8 @@ namespace Go
         {
             if (groupCache == null)
             {
-                groupCache = new List<Group>();
+                groupCache = GroupListPool.Rent();
+                groupCache.Clear();
                 groupCache2 = new Group[SizeX, SizeY];
             }
             Group group = groupCache.SingleOrDefault(z => z.ContainsPoint(x, y));
@@ -571,16 +584,21 @@ namespace Go
             if (HasLiberties(x, y))
                 return false;
 
-            var capturedGroups = GetCapturedGroups(x, y);
-            if (capturedGroups.Count == 0)
+            List<Group> captures = GroupListPool.Rent();
+            captures.Clear();
+            GetCapturedGroups(x, y, captures);
+            if (captures.Count == 0)
+            {
+                GroupListPool.Return(captures);
                 return true;
+            }
 
+            GroupListPool.Return(captures);
             return false;
         }
 
-        internal List<Group> GetCapturedGroups(int x, int y)
+        internal void GetCapturedGroups(int x, int y, List<Group> captures)
         {
-            List<Group> captures = new List<Group>();
             #if DISABLE_GROUP_POINTS
             return captures;
             #endif
@@ -598,7 +616,6 @@ namespace Go
                     }
                 }
             }
-            return captures;
         }
 
         private List<Point> GetStoneNeighbours(int x, int y)
@@ -632,7 +649,11 @@ namespace Go
 
         private void ClearGroupCache()
         {
-            groupCache = null;
+            if (groupCache != null)
+            {
+                GroupListPool.Return(groupCache);
+                groupCache = null;
+            }
         }
 
         private int GetContentHashCode()
