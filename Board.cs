@@ -416,7 +416,8 @@ namespace Go
             {
                 groupCache = GroupListPool.Rent();
                 groupCache.Clear();
-                if (groupCache2 == null)
+                if (groupCache2 == null ||
+                    groupCache2.GetLength(0) != SizeX || groupCache2.GetLength(1) != SizeY)
                 {
                     groupCache2 = new Group[SizeX, SizeY];
                 }
