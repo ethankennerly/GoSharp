@@ -49,10 +49,17 @@ namespace Go
 
         public bool AnyPointsIntersect(List<Group> groups)
         {
-            return groups.Any(g => g.points.Intersect(points).Any());
+            foreach (Group group in groups)
+            {
+                if ((pointsMask & group.pointsMask) > 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        private HashSet<Point> points = Point.CreateHashSet();
         private HashSet<Point> neighbours = Point.CreateHashSet();
 
         /// <summary>
@@ -89,7 +96,6 @@ namespace Go
         {
             pointsMask = 0;
             neighboursMask = 0;
-            points.Clear();
             neighbours.Clear();
             IsDead = false;
         }
@@ -133,19 +139,6 @@ namespace Go
         {
             neighbours.Add(new Point(x, y));
             neighboursMask |= Board.GetCellMask(x, y, SizeX, SizeY);
-        }
-
-        /// <summary>
-        /// Returns a string representation of the group as a list of points.
-        /// </summary>
-        /// <returns>Returns a string representation of the group as a list of points.</returns>
-        public override string ToString()
-        {
-            if (points.Count == 0) return Content.ToString() + ":{}";
-            string rc = Content.ToString() + ":{";
-            foreach (var p in points) rc += p.ToString() + ",";
-            rc = rc.Substring(0, rc.Length - 1) + "}";
-            return rc;
         }
     }
 }
