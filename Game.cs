@@ -217,6 +217,12 @@ namespace Go
             return MakeMove(p.x, p.y, out dummy, nextGame);
         }
 
+        public Game MakeLegalMove(Point p, Game nextGame)
+        {
+            bool dummy;
+            return MakeMove(p.x, p.y, out dummy, nextGame);
+        }
+
         /// <summary>
         /// Makes a move and returns a new Game object representing the state after the
         /// move. The move is carried out whether it is legal or illegal (for example,
