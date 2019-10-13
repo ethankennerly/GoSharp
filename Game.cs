@@ -19,7 +19,7 @@ namespace Go
 
         public static void InitPools()
         {
-            if (ObjectPool<Game>.TryInit(8) || GamePool == null)
+            if (ObjectPool<Game>.TryInit(64) || GamePool == null)
             {
                 GamePool = ObjectPool<Game>.Shared;
             }
@@ -64,7 +64,7 @@ namespace Go
             if (player == Content.White)
                 score += Komi;
 
-            if (Board.IsScoring)
+            if (Board != null && Board.IsScoring)
             {
                 var territory = Board.Territory;
                 if (territory.ContainsKey(player))

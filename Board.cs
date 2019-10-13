@@ -447,7 +447,7 @@ namespace Go
             return false;
             #endif
             if (group.Content == Content.Empty)
-                return group.NumPoints() > 0;
+                return true;
 
             return group.AnyNeighbour(GetEmptyMask());
         }
