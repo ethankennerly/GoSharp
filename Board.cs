@@ -233,6 +233,15 @@ namespace Go
                 SizeX = fromBoard.SizeX;
                 SizeY = fromBoard.SizeY;
             }
+
+            if (SizeX < 1 || SizeX > 5)
+            {
+                throw new ArgumentOutOfRangeException("SizeX", "Invalid size x: " + SizeX);
+            }
+            if (SizeY < 1 || SizeY > 5)
+            {
+                throw new ArgumentOutOfRangeException("SizeY", "Invalid size y: " + SizeY);
+            }
             Array.Copy(fromBoard.playerCellMask, playerCellMask, fromBoard.playerCellMask.Length);
             IsScoring = fromBoard.IsScoring;
             ClearGroupCache();
@@ -344,11 +353,11 @@ namespace Go
         {
             if (x < 0 || x >= SizeX)
             {
-                throw new ArgumentOutOfRangeException("x", "Invalid x coordinate.");
+                throw new ArgumentOutOfRangeException("x", "Invalid x coordinate: " + x);
             }
             if (y < 0 || y >= SizeY)
             {
-                throw new ArgumentOutOfRangeException("y", "Invalid y coordinate.");
+                throw new ArgumentOutOfRangeException("y", "Invalid y coordinate: " + y);
             }
 
             SetContentMask(x, y, c);
@@ -388,7 +397,16 @@ namespace Go
                     Array.Clear(groupCache2, 0, groupCache2.Length);
                 }
             }
-            Group group = groupCache.SingleOrDefault(z => z.ContainsPoint(x, y));
+
+            Group group = null;
+            foreach (Group cache in groupCache)
+            {
+                if (cache.ContainsPoint(x, y))
+                {
+                    group = cache;
+                    break;
+                }
+            }
             if (group == null)
             {
                 group = GroupPool.Rent();

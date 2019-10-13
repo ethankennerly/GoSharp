@@ -134,11 +134,11 @@ namespace Go
         /// <param name="cloneTurn">Otherwise, sets opposite turn.</param>
         public void Clone(Game fromGame, bool cloneTurn = false)
         {
+            Board = new Board(fromGame.Board);
+
             m_NumPasses = fromGame.m_NumPasses;
             m_Ended = fromGame.Ended;
 
-            Board = new Board();
-            Board.Clone(fromGame.Board);
             if (cloneTurn)
             {
                 Turn = fromGame.Turn;
@@ -153,6 +153,8 @@ namespace Go
             #endif
             superKoSet.Clear();
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
+
+            IsLegal = fromGame.IsLegal;
         }
 
         /// <summary>
@@ -160,7 +162,7 @@ namespace Go
         /// </summary>
         /// <param name="bs">The source Board.</param>
         /// <param name="turn">The color of the player whose turn it is to play.</param>
-        public Game(Board bs, Content turn)
+        public void Clone(Board bs, Content turn)
         {
             Board = new Board(bs);
             Turn = turn;
@@ -173,42 +175,19 @@ namespace Go
         /// The legality of the move may be determined by examining the IsLegal property
         /// of the returned object.
         /// </summary>
-        /// <param name="n">The coordinates of the move.</param>
-        /// <returns>A game object representing the state of the game after the move.</returns>
-        public Game MakeMove(Point n)
-        {
-            return MakeMove(n.x, n.y);
-        }
-
-        /// <summary>
-        /// Makes a move and returns a new Game object representing the state after the
-        /// move. The move is carried out whether it is legal or illegal (for example,
-        /// an overwrite move). The color of the move is determined by the Turn property.
-        /// If the move was illegal (suicide, violating super-ko, or an overwrite), the
-        /// method sets the legal parameter to false, otherwise it is set to true.
-        /// </summary>
-        /// <param name="n">The coordinates of the move.</param>
-        /// <param name="legal">Set to true if the move was legal, false otherwise.</param>
-        /// <returns>A game object representing the state of the game after the move.</returns>
-        public Game MakeMove(Point n, out bool legal)
-        {
-            return MakeMove(n.x, n.y, out legal);
-        }
-
-        /// <summary>
-        /// Makes a move and returns a new Game object representing the state after the
-        /// move. The move is carried out whether it is legal or illegal (for example,
-        /// an overwrite move). The color of the move is determined by the Turn property.
-        /// The legality of the move may be determined by examining the IsLegal property
-        /// of the returned object.
-        /// </summary>
         /// <param name="x">The X coordinate of the move.</param>
         /// <param name="y">The Y coordinate of the move.</param>
         /// <returns>A game object representing the state of the game after the move.</returns>
-        public Game MakeMove(int x, int y)
+        public Game MakeMove(int x, int y, Game nextGame)
         {
             bool dummy;
-            return MakeMove(x, y, out dummy);
+            return MakeMove(x, y, out dummy, nextGame);
+        }
+
+        public Game MakeMove(Point p, Game nextGame)
+        {
+            bool dummy;
+            return MakeMove(p.x, p.y, out dummy, nextGame);
         }
 
         /// <summary>
@@ -222,21 +201,21 @@ namespace Go
         /// <param name="y">The Y coordinate of the move.</param>
         /// <param name="legal">Set to true if the move was legal, false otherwise.</param>
         /// <returns>A game object representing the state of the game after the move.</returns>
-        public Game MakeMove(int x, int y, out bool legal)
+        public Game MakeMove(int x, int y, out bool legal, Game nextGame)
         {
             if (x < 0 && y < 0)
             {
                 legal = true;
-                return Pass();
+                return Pass(nextGame);
             }
 
             if (m_NumPasses > 0)
                 m_NumPasses--;
 
-            var g = new Game();
-            g.Clone(this);
-            legal = g.InternalMakeMove(x, y);
-            return g;
+            nextGame.Clone(this);
+            legal = nextGame.InternalMakeMove(x, y);
+            nextGame.IsLegal = legal;
+            return nextGame;
         }
 
         private const int kMaxPasses = 1;
@@ -255,7 +234,7 @@ namespace Go
         /// the move. The color of the move is determined by the Turn property.
         /// </summary>
         /// <returns>A game object representing the state of the game after the move.</returns>
-        public Game Pass()
+        public Game Pass(Game nextGame)
         {
             m_NumPasses++;
             m_Ended = m_NumPasses > kMaxPasses;
@@ -264,9 +243,8 @@ namespace Go
                 Board.IsScoring = true;
             }
 
-            var g = new Game();
-            g.Clone(this);
-            return g;
+            nextGame.Clone(this);
+            return nextGame;
         }
 
         /// <summary>
@@ -276,7 +254,7 @@ namespace Go
         /// <param name="x">The X coordinate of the move.</param>
         /// <param name="y">The Y coordinate of the move.</param>
         /// <returns>True if the move was legal.</returns>
-        protected bool InternalMakeMove(int x, int y)
+        private bool InternalMakeMove(int x, int y)
         {
             bool legal = true;
             Content oturn = Turn.Opposite();

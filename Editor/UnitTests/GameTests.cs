@@ -13,7 +13,8 @@ namespace Go.UnitTests
         public void GetLegalMovesOn1x3()
         {
             Game.InitPools();
-            Game game = new Game(new Board(1, 3), Content.Black);
+            Game game = Game.GamePool.Rent();
+            game.Clone(new Board(1, 3), Content.Black);
 
             List<Point> moves = game.GetLegalMoves(true);
             List<Point> threeMoves = new List<Point>()
@@ -24,12 +25,16 @@ namespace Go.UnitTests
             };
             Assert.AreEqual(threeMoves, moves);
 
-            game = game.MakeMove(threeMoves[1]);
-            moves = game.GetLegalMoves(true);
+            Game nextGame = Game.GamePool.Rent();
+            nextGame = game.MakeMove(threeMoves[1], nextGame);
+            Game.GamePool.Return(game);
+            moves = nextGame.GetLegalMoves(true);
             List<Point> passMoves = new List<Point>()
             {
                 Game.PassMove
             };
+
+            Game.GamePool.Return(nextGame);
             Assert.AreEqual(passMoves, moves,
                 "After play center. Board:\n" + game.Board.ToString());
         }
@@ -38,7 +43,8 @@ namespace Go.UnitTests
         public void GetLegalMovesOn1x2()
         {
             Game.InitPools();
-            Game game = new Game(new Board(1, 2), Content.Black);
+            Game game = Game.GamePool.Rent();
+            game.Clone(new Board(1, 2), Content.Black);
 
             List<Point> moves = game.GetLegalMoves(true);
             List<Point> twoMoves = new List<Point>()
@@ -48,8 +54,10 @@ namespace Go.UnitTests
             };
             Assert.AreEqual(twoMoves, moves);
 
-            game = game.MakeMove(twoMoves[0]);
-            moves = game.GetLegalMoves(true);
+            Game nextGame = Game.GamePool.Rent();
+            nextGame = game.MakeMove(twoMoves[0], nextGame);
+            Game.GamePool.Return(game);
+            moves = nextGame.GetLegalMoves(true);
             List<Point> captureMoves = new List<Point>()
             {
                 new Point(0, 1)
@@ -57,12 +65,13 @@ namespace Go.UnitTests
             Assert.AreEqual(captureMoves, moves,
                 "After play (0, 0) can capture. Board:\n" + game.Board.ToString());
 
-            game = game.MakeMove(captureMoves[0]);
+            game = nextGame.MakeMove(captureMoves[0], game);
             moves = game.GetLegalMoves(true);
             List<Point> passMoves = new List<Point>()
             {
                 Game.PassMove
             };
+            Game.GamePool.Return(nextGame);
             Assert.AreEqual(passMoves, moves,
                 "After capture. Ko. Board:\n" + game.Board.ToString());
         }
