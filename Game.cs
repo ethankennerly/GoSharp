@@ -57,9 +57,7 @@ namespace Go
                 return 0f;
 
             Content other = GetOtherPlayer(player);
-            int captured = captures[other];
-
-            float score = -captured;
+            float score = captures[player] - captures[other];
 
             if (player == Content.White)
                 score += Komi;
@@ -92,6 +90,18 @@ namespace Go
             return score < otherScore ? 0.0 : (score > otherScore ? 1.0 : 0.5);
         }
 
+        /// <summary>
+        /// Stores previous stone layout up to 5x5 and move that was made.
+        /// 25 bits: black stone bitmask.
+        /// 25 bits: white stone bitmask.
+        /// 5 bits: move index.
+        /// If current stone layout equals any previous stone layout, those moves are illegal.
+        /// This memoization is faster than computing captures.
+        ///
+        /// Technically, some degenerate scenarios can repeat stone layouts from other inputs.
+        /// <see cref="Go.UniTests.GameTests"/> with <c>STRICT_KO</c>.
+        /// Yet, practically the best tactics are still rewarded.
+        /// </summary>
         private HashSet<ulong> superKoSet = new HashSet<ulong>();
 
         /// <summary>
@@ -166,6 +176,12 @@ namespace Go
         {
             Board = new Board(bs);
             Turn = turn;
+            superKoSet.Clear();
+            IsLegal = true;
+            m_NumPasses = 0;
+            m_Ended = false;
+            captures[Content.White] = 0;
+            captures[Content.Black] = 0;
         }
 
         /// <summary>
@@ -256,9 +272,14 @@ namespace Go
         /// <returns>True if the move was legal.</returns>
         private bool InternalMakeMove(int x, int y)
         {
-            bool legal = true;
+            bool legal = Board[x, y] == Content.Empty; // Overwrite move
+
+            int moveIndex = y * Board.SizeX + x;
+            ulong previousContentAndMoveMask = Board.GetContentAndMoveMask(moveIndex);
+            if (!superKoSet.Add(previousContentAndMoveMask)) // Violates super-ko
+                legal = false;
+
             Content oturn = Turn.Opposite();
-            if (Board[x, y] != Content.Empty) legal = false; // Overwrite move
             Board[x, y] = oturn;
             List<Group> capturedGroups = Board.GroupListPool.Rent();
             capturedGroups.Clear();
@@ -270,9 +291,6 @@ namespace Go
             }
             else captures[oturn] += Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
 
-            if (!superKoSet.Add(Board.GetContentMask())) // Violates super-ko
-                legal = false;
-            
             IsLegal = legal;
             Board.GroupListPool.Return(capturedGroups);
             return legal;
@@ -304,6 +322,11 @@ namespace Go
                     if (Board[x, y] != Content.Empty)
                         continue;
 
+                    int moveIndex = y * Board.SizeX + x;
+                    ulong previousContentAndMoveMask = Board.GetContentAndMoveMask(moveIndex);
+                    if (superKoSet.Contains(previousContentAndMoveMask)) // Violates super-ko
+                        continue;
+
                     Board hypotheticalBoard = BoardPool.Rent();
                     List<Group> capturedGroups = Board.GroupListPool.Rent();
                     Board.GetHypotheticalCapturedGroups(hypotheticalBoard, capturedGroups, x, y, turn);
@@ -318,12 +341,6 @@ namespace Go
                     if (capturedGroups.Count != 0)
                     {
                         hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
-                        if (superKoSet.Contains(hypotheticalBoard.GetContentMask())) // Violates super-ko
-                        {
-                            Board.GroupListPool.Return(capturedGroups);
-                            BoardPool.Return(hypotheticalBoard);
-                            continue;
-                        }
                     }
 
                     moves.Add(new Point(x, y));

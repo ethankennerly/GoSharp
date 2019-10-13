@@ -46,9 +46,21 @@ namespace Go
             return ~(playerCellMask[kBlackIndex] | playerCellMask[kWhiteIndex]);
         }
 
+        private const int kMaxSize = 5;
+        private const int kMaxCells = kMaxSize * kMaxSize;
+        private const int kBothPlayerCells = 2 * kMaxCells;
+
         public ulong GetContentMask()
         {
-            return playerCellMask[kBlackIndex] + (playerCellMask[kWhiteIndex] << 8);
+            return playerCellMask[kBlackIndex] +
+                (playerCellMask[kWhiteIndex] << kMaxCells);
+        }
+
+        public ulong GetContentAndMoveMask(int moveIndex)
+        {
+            return (ulong)(playerCellMask[kBlackIndex]) +
+                (ulong)(playerCellMask[kWhiteIndex] << kMaxCells) +
+                (ulong)(moveIndex << kBothPlayerCells);
         }
 
         public static uint GetCellMask(int x, int y, int SizeX, int SizeY)

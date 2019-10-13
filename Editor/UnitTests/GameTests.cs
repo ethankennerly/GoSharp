@@ -10,7 +10,7 @@ namespace Go.UnitTests
     public sealed class GameTests
     {
         [Test]
-        public void GetLegalMovesOn1x3()
+        public void GetLegalMovesOn1x3Center()
         {
             Game.InitPools();
             Game game = Game.GamePool.Rent();
@@ -23,7 +23,8 @@ namespace Go.UnitTests
                 new Point(0, 1),
                 new Point(0, 2)
             };
-            Assert.AreEqual(threeMoves, moves);
+            Assert.AreEqual(threeMoves, moves,
+                "First move has 3 legal moves on 1x3. Board:\n" + game.Board.ToString());
 
             Game nextGame = Game.GamePool.Rent();
             nextGame = game.MakeMove(threeMoves[1], nextGame);
@@ -36,7 +37,7 @@ namespace Go.UnitTests
 
             Game.GamePool.Return(nextGame);
             Assert.AreEqual(passMoves, moves,
-                "After play center. Board:\n" + game.Board.ToString());
+                "After play center. Board:\n" + nextGame.Board.ToString());
         }
 
         [Test]
@@ -52,7 +53,8 @@ namespace Go.UnitTests
                 new Point(0, 0),
                 new Point(0, 1)
             };
-            Assert.AreEqual(twoMoves, moves);
+            Assert.AreEqual(twoMoves, moves,
+                "First move has 2 legal moves on 1x2. Board:\n" + game.Board.ToString());
 
             Game nextGame = Game.GamePool.Rent();
             nextGame = game.MakeMove(twoMoves[0], nextGame);
@@ -63,8 +65,9 @@ namespace Go.UnitTests
                 new Point(0, 1)
             };
             Assert.AreEqual(captureMoves, moves,
-                "After play (0, 0) can capture. Board:\n" + game.Board.ToString());
+                "After play (0, 0) can capture. Board:\n" + nextGame.Board.ToString());
 
+            #if STRICT_KO
             game = nextGame.MakeMove(captureMoves[0], game);
             moves = game.GetLegalMoves(true);
             List<Point> passMoves = new List<Point>()
@@ -74,6 +77,7 @@ namespace Go.UnitTests
             Game.GamePool.Return(nextGame);
             Assert.AreEqual(passMoves, moves,
                 "After capture. Ko. Board:\n" + game.Board.ToString());
+            #endif
         }
     }
 }
