@@ -14,7 +14,6 @@ namespace Go
     {
         private const int kBlackIndex = 0;
         private const int kWhiteIndex = 1;
-        private const Content kPlayer0 = Content.Black;
 
         public static ObjectPool<List<Group>> GroupListPool;
         public static ObjectPool<Group> GroupPool;
@@ -89,11 +88,9 @@ namespace Go
             }
         }
 
-        private Content[,] content;
         private Group[,] groupCache2;
         private List<Group> groupCache = null;
         private bool _IsScoring = false;
-        private int? _Hash = null;
 
         /// <summary>
         /// Gets the horizontal size of the board.
@@ -216,7 +213,6 @@ namespace Go
         /// <param name="sy">The vertical size of the board.</param>
         public Board(int sx, int sy)
         {
-            // content = new Content[sx, sy];
             SizeX = sx;
             SizeY = sy;
         }
@@ -356,7 +352,6 @@ namespace Go
             }
 
             SetContentMask(x, y, c);
-            _Hash = null;
 
             ClearGroupCache();
         }
@@ -561,7 +556,7 @@ namespace Go
 
         private List<Point> GetStoneNeighbours(int x, int y)
         {
-            List<Point> rc = new List<Point>();
+            List<Point> rc = new List<Point>(4);
             if (x > 0) rc.Add(new Point(x - 1, y));
             if (x < SizeX - 1) rc.Add(new Point(x + 1, y));
             if (y > 0) rc.Add(new Point(x, y - 1));
@@ -599,11 +594,6 @@ namespace Go
             }
         }
 
-        private int GetContentHashCode()
-        {
-            return (int)(playerCellMask[0] + playerCellMask[1]);
-        }
-
         /// <summary>
         /// Returns a multi-line string representation of the board with the scoring
         /// state. Each spot is composed of two characters. The first is one of [.XO]
@@ -638,19 +628,6 @@ namespace Go
                 rc += "\n";
             }
             return rc;
-        }
-
-        /// <summary>
-        /// Gets a hash code of this board. Hash code includes board content.
-        /// </summary>
-        /// <returns></returns>
-        public override int GetHashCode()
-        {
-            if (_Hash == null)
-            {
-                _Hash = GetContentHashCode();
-            }
-            return _Hash.Value;
         }
 
         /// <summary>
@@ -739,24 +716,6 @@ namespace Go
                     }
                 }
                 return territories;
-            }
-        }
-
-        /// <summary>
-        /// Returns an enumerable representing all empty board spots.
-        /// </summary>
-        public IEnumerable<Point> EmptySpaces
-        {
-            get
-            {
-                for (int i = 0; i < SizeX; i++)
-                {
-                    for (int j = 0; j < SizeY; j++)
-                    {
-                        if (this[i, j] == Content.Empty)
-                            yield return new Point(i, j);
-                    }
-                }
             }
         }
     }

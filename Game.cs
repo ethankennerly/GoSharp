@@ -263,6 +263,7 @@ namespace Go
             {
                 Board.IsScoring = true;
             }
+
             var g = new Game();
             g.Clone(this);
             return g;

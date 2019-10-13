@@ -84,6 +84,8 @@ namespace Go
             pointsMask = 0;
             neighboursMask = 0;
             IsDead = false;
+            Territory = Content.Empty;
+            Content = Content.Empty;
         }
 
         /// <summary>
