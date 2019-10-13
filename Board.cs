@@ -10,7 +10,7 @@ namespace Go
     /// Encapsulates a board position, without any game context. This object also
     /// supports scoring mode by setting the IsScoring property to true.
     /// </summary>
-    public class Board
+    public sealed class Board
     {
         private const int kBlackIndex = 0;
         private const int kWhiteIndex = 1;
@@ -504,24 +504,6 @@ namespace Go
             if (!IsScoring) return;
             ClearGroupCache();
             CalcTerritory();
-        }
-
-        internal bool IsSuicide(int x, int y)
-        {
-            if (HasLiberties(x, y))
-                return false;
-
-            List<Group> captures = GroupListPool.Rent();
-            captures.Clear();
-            GetCapturedGroups(x, y, captures);
-            if (captures.Count == 0)
-            {
-                GroupListPool.Return(captures);
-                return true;
-            }
-
-            GroupListPool.Return(captures);
-            return false;
         }
 
         public void GetHypotheticalCapturedGroups(

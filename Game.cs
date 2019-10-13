@@ -12,7 +12,7 @@ namespace Go
     /// by a non-null GameInfo property. The root of a specified game may be obtained
     /// using the Root property.
     /// </summary>
-    public class Game
+    public sealed class Game
     {
         public static ObjectPool<Game> GamePool;
         public static ObjectPool<Board> BoardPool;
