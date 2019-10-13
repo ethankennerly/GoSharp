@@ -327,25 +327,13 @@ namespace Go
                     if (superKoSet.Contains(previousContentAndMoveMask)) // Violates super-ko
                         continue;
 
-                    Board hypotheticalBoard = BoardPool.Rent();
-                    List<Group> capturedGroups = Board.GroupListPool.Rent();
-                    Board.GetHypotheticalCapturedGroups(hypotheticalBoard, capturedGroups, x, y, turn);
-                    if (capturedGroups.Count == 0 && !hypotheticalBoard.HasLiberties(x, y)) // Suicide move
+                    Board[x, y] = turn;
+                    bool suicide = !(Board.HasLiberties(x, y) || Board.WouldCapture(x, y));
+                    if (!suicide)
                     {
-                        Board.GroupListPool.Return(capturedGroups);
-                        BoardPool.Return(hypotheticalBoard);
-
-                        continue;
+                        moves.Add(new Point(x, y));
                     }
-
-                    if (capturedGroups.Count != 0)
-                    {
-                        hypotheticalBoard.Capture(capturedGroups.Where(p => p.Content == turn.Opposite()));
-                    }
-
-                    moves.Add(new Point(x, y));
-                    Board.GroupListPool.Return(capturedGroups);
-                    BoardPool.Return(hypotheticalBoard);
+                    Board[x, y] = Content.Empty;
                 }
             }
 

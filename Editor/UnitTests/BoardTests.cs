@@ -26,7 +26,7 @@ namespace Go.UnitTests
         }
 
         [Test]
-        public void GetHypotheticalCapturedGroupsOn1x3()
+        public void WouldCaptureOn1x3()
         {
             ObjectPool<Board>.TryInit(1);
             Board.InitPools();
@@ -34,19 +34,15 @@ namespace Go.UnitTests
             int x = 0;
             for (int y = 0; y < 3; ++y)
             {
-                Board hypotheticalBoard = ObjectPool<Board>.Shared.Rent();
-                List<Group> capturedGroups = Board.GroupListPool.Rent();
-                board.GetHypotheticalCapturedGroups(
-                    hypotheticalBoard, capturedGroups, x, y, Content.Black);
-                int numCaptures = capturedGroups.Count;
-                bool hasLiberties = hypotheticalBoard.HasLiberties(x, y);
-                Board.GroupListPool.Return(capturedGroups);
-                ObjectPool<Board>.Shared.Return(hypotheticalBoard);
+                board[x, y] = Content.Black;
+                bool wouldCapture = board.WouldCapture(x, y);
+                bool wouldHaveLiberties = board.HasLiberties(x, y);
+                board[x, y] = Content.Empty;
 
-                Assert.AreEqual(0, numCaptures,
+                Assert.IsFalse(wouldCapture,
                     "y: " + y);
-                Assert.IsTrue(hasLiberties,
-                    "Has liberties at y: " + y);
+                Assert.IsTrue(wouldHaveLiberties,
+                    "Would have liberties at y: " + y);
             }
         }
     }

@@ -536,13 +536,14 @@ namespace Go
             CalcTerritory();
         }
 
-        public void GetHypotheticalCapturedGroups(
-            Board hypotheticalBoard, List<Group> capturedGroups, int x, int y, Content turn)
+        public bool WouldCapture(int x, int y)
         {
-            hypotheticalBoard.Clone(this);
-            hypotheticalBoard[x, y] = turn;
+            List<Group> capturedGroups = Board.GroupListPool.Rent();
             capturedGroups.Clear();
-            hypotheticalBoard.GetCapturedGroups(x, y, capturedGroups);
+            GetCapturedGroups(x, y, capturedGroups);
+            bool wouldCapture = capturedGroups.Count > 0;
+            Board.GroupListPool.Return(capturedGroups);
+            return wouldCapture;
         }
 
         public void GetCapturedGroups(int x, int y, List<Group> captures)
