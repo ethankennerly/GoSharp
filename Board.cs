@@ -538,12 +538,25 @@ namespace Go
 
         public bool WouldCapture(int x, int y)
         {
-            List<Group> capturedGroups = Board.GroupListPool.Rent();
-            capturedGroups.Clear();
-            GetCapturedGroups(x, y, capturedGroups);
-            bool wouldCapture = capturedGroups.Count > 0;
-            Board.GroupListPool.Return(capturedGroups);
-            return wouldCapture;
+            #if DISABLE_GROUP_POINTS
+            return false;
+            #endif
+
+            var stoneNeighbours = GetStoneNeighbours(x, y);
+            foreach (var n in stoneNeighbours)
+            {
+                if (GetContentAt(n) != Content.Empty)
+                {
+                    Group ngroup = GetGroupAt(n);
+                    if (ngroup.ContainsPoint(x, y)) continue; // Don't consider self group
+                    if (!HasLiberties(ngroup))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         public void GetCapturedGroups(int x, int y, List<Group> captures)
