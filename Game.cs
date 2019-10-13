@@ -37,7 +37,18 @@ namespace Go
         /// </summary>
         public static readonly Point PassMove = new Point(-1, -1);
 
-        public float Komi = 5.5f;
+        public float Komi
+        {
+            get
+            {
+                if (Board.SizeX < 5 || Board.SizeY < 5)
+                {
+                    return 1.5f;
+                }
+
+                return 5.5f;
+            }
+        }
 
         private Dictionary<Content, int> captures = new Dictionary<Content, int>()
         {
@@ -57,7 +68,7 @@ namespace Go
                 return 0f;
 
             Content other = GetOtherPlayer(player);
-            float score = captures[player] - captures[other];
+            float score = -captures[other];
 
             if (player == Content.White)
                 score += Komi;
