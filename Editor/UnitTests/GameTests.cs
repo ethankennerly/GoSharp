@@ -16,7 +16,7 @@ namespace Go.UnitTests
             Game game = Game.GamePool.Rent();
             game.Clone(new Board(1, 3), Content.Black);
 
-            List<Point> moves = game.GetLegalMoves(true);
+            List<Point> moves = game.GetLegalMoves();
             List<Point> threeMoves = new List<Point>()
             {
                 new Point(0, 0),
@@ -29,7 +29,38 @@ namespace Go.UnitTests
             Game nextGame = Game.GamePool.Rent();
             nextGame = game.MakeMove(threeMoves[1], nextGame);
             Game.GamePool.Return(game);
-            moves = nextGame.GetLegalMoves(true);
+            moves = nextGame.GetLegalMoves();
+            List<Point> passMoves = new List<Point>()
+            {
+                Game.PassMove
+            };
+
+            Game.GamePool.Return(nextGame);
+            Assert.AreEqual(passMoves, moves,
+                "After play center. Board:\n" + nextGame.Board.ToString());
+        }
+
+        [Test]
+        public void MakeLegalMovesOn1x3Center()
+        {
+            Game.InitPools();
+            Game game = Game.GamePool.Rent();
+            game.Clone(new Board(1, 3), Content.Black);
+
+            List<Point> moves = game.GetLegalMoves();
+            List<Point> threeMoves = new List<Point>()
+            {
+                new Point(0, 0),
+                new Point(0, 1),
+                new Point(0, 2)
+            };
+            Assert.AreEqual(threeMoves, moves,
+                "First move has 3 legal moves on 1x3. Board:\n" + game.Board.ToString());
+
+            Game nextGame = Game.GamePool.Rent();
+            nextGame = game.MakeLegalMove(threeMoves[1], nextGame);
+            Game.GamePool.Return(game);
+            moves = nextGame.GetLegalMoves();
             List<Point> passMoves = new List<Point>()
             {
                 Game.PassMove
@@ -47,7 +78,7 @@ namespace Go.UnitTests
             Game game = Game.GamePool.Rent();
             game.Clone(new Board(1, 2), Content.Black);
 
-            List<Point> moves = game.GetLegalMoves(true);
+            List<Point> moves = game.GetLegalMoves();
             List<Point> twoMoves = new List<Point>()
             {
                 new Point(0, 0),
@@ -59,7 +90,7 @@ namespace Go.UnitTests
             Game nextGame = Game.GamePool.Rent();
             nextGame = game.MakeMove(twoMoves[0], nextGame);
             Game.GamePool.Return(game);
-            moves = nextGame.GetLegalMoves(true);
+            moves = nextGame.GetLegalMoves();
             List<Point> captureMoves = new List<Point>()
             {
                 new Point(0, 1)
@@ -69,7 +100,7 @@ namespace Go.UnitTests
 
             #if STRICT_KO
             game = nextGame.MakeMove(captureMoves[0], game);
-            moves = game.GetLegalMoves(true);
+            moves = game.GetLegalMoves();
             List<Point> passMoves = new List<Point>()
             {
                 Game.PassMove

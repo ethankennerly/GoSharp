@@ -536,7 +536,7 @@ namespace Go
             CalcTerritory();
         }
 
-        public bool WouldCapture(int x, int y)
+        public bool WouldCapture(int x, int y, Content content)
         {
             #if DISABLE_GROUP_POINTS
             return false;
@@ -545,10 +545,9 @@ namespace Go
             var stoneNeighbours = GetStoneNeighbours(x, y);
             foreach (var n in stoneNeighbours)
             {
-                if (GetContentAt(n) != Content.Empty)
+                if (GetContentAt(n) == content)
                 {
                     Group ngroup = GetGroupAt(n);
-                    if (ngroup.ContainsPoint(x, y)) continue; // Don't consider self group
                     if (!HasLiberties(ngroup))
                     {
                         return true;

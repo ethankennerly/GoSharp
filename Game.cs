@@ -1,9 +1,12 @@
 ﻿using FineGameDesign.Pooling;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.IO;
+
+using Debug = UnityEngine.Debug;
 
 namespace Go
 {
@@ -41,6 +44,11 @@ namespace Go
         {
             get
             {
+                if (Board == null)
+                {
+                    return 0f;
+                }
+
                 if (Board.SizeX < 5 || Board.SizeY < 5)
                 {
                     return 1.5f;
@@ -219,8 +227,19 @@ namespace Go
 
         public Game MakeLegalMove(Point p, Game nextGame)
         {
-            bool dummy;
-            return MakeMove(p.x, p.y, out dummy, nextGame);
+            if (p.x < 0 && p.y < 0)
+            {
+                return Pass(nextGame);
+            }
+
+
+            if (m_NumPasses > 0)
+                m_NumPasses--;
+
+            IsLegal = true;
+            nextGame.Clone(this, cloneTurn: true);
+            nextGame.MakeLegalMove(p);
+            return nextGame;
         }
 
         /// <summary>
@@ -313,6 +332,33 @@ namespace Go
             return legal;
         }
 
+        private void MakeLegalMove(Point p)
+        {
+            int moveIndex = p.y * Board.SizeX + p.x;
+            ulong previousContentAndMoveMask = Board.GetContentAndMoveMask(moveIndex);
+            superKoSet.Add(previousContentAndMoveMask);
+
+            Content oturn = Turn.Opposite();
+            Board[p.x, p.y] = Turn;
+            List<Group> capturedGroups = Board.GroupListPool.Rent();
+            capturedGroups.Clear();
+            Board.GetCapturedGroups(p.x, p.y, capturedGroups);
+            foreach (Group capturedGroup in capturedGroups)
+            {
+                int numCaptures = Board.Capture(capturedGroup);
+                if (capturedGroup.Content == Turn)
+                {
+                    captures[oturn] += numCaptures;
+                }
+                else if (capturedGroup.Content == oturn)
+                {
+                    captures[Turn] += numCaptures;
+                }
+            }
+            Board.GroupListPool.Return(capturedGroups);
+            Turn = oturn;
+        }
+
         private static readonly List<Point> s_Empty = new List<Point>();
 
         /// <returns>
@@ -324,13 +370,14 @@ namespace Go
         /// Smart territory calculation needs pretty good AI.
         /// </returns>
         /// <param name="cloneTurn">Otherwise, gets moves for opposite player's turn.</param>
-        public List<Point> GetLegalMoves(bool cloneTurn = false)
+        public List<Point> GetLegalMoves(bool cloneTurn = true)
         {
-            if (Board == null || Board.IsScoring)
+            if (Board == null || Board.IsScoring || Ended)
                 return s_Empty;
 
             List<Point> moves = new List<Point>();
             Content turn = cloneTurn ? Turn : Turn.Opposite();
+            Content oturn = cloneTurn ? Turn.Opposite() : Turn;
 
             for (int x = 0; x < Board.SizeX; x++)
             {
@@ -342,12 +389,22 @@ namespace Go
                     int moveIndex = y * Board.SizeX + x;
                     ulong previousContentAndMoveMask = Board.GetContentAndMoveMask(moveIndex);
                     if (superKoSet.Contains(previousContentAndMoveMask)) // Violates super-ko
+                    {
+                        Log("Game.GetLegalMoves: Super-ko: " + turn + "(" + x + "," + y + ")");
                         continue;
+                    }
 
                     Board[x, y] = turn;
-                    bool suicide = !(Board.HasLiberties(x, y) || Board.WouldCapture(x, y));
-                    if (!suicide)
+                    bool hasLiberties = Board.HasLiberties(x, y);
+                    bool wouldCapture = Board.WouldCapture(x, y, oturn);
+                    if (!(hasLiberties || wouldCapture))
                     {
+                        Log("Game.GetLegalMoves: Suicide: " + turn + "(" + x + "," + y + ")");
+                    }
+                    else
+                    {
+                        Log("Game.GetLegalMoves: Legal: " + turn + "(" + x + "," + y + ")" +
+                            "\nhasLiberties=" + hasLiberties + " wouldCapture=" + wouldCapture);
                         moves.Add(new Point(x, y));
                     }
                     Board[x, y] = Content.Empty;
@@ -358,11 +415,18 @@ namespace Go
             {
                 if (!Board.IsScoring)
                 {
+                    Log("Game.GetLegalMoves: Pass: " + turn);
                     moves.Add(PassMove);
                 }
             }
 
             return moves;
+        }
+
+        [Conditional("LOG_GO_GAME")]
+        private void Log(string message)
+        {
+            Debug.Log(message + ((Board == null) ? "" : "\nBoard:\n" + Board.ToString()));
         }
     }
 }
