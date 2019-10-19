@@ -68,6 +68,7 @@ namespace Go
         /// Cache legal moves. Copy when cloning game. Update after making a move.
         /// </summary>
         private List<Point> legalMoves;
+        private uint legalMovesMask;
 
         /// <summary>
         /// Not relative to the other player at this stage.
@@ -192,6 +193,7 @@ namespace Go
             if (cloneTurn)
             {
                 legalMoves = new List<Point>(fromGame.legalMoves);
+                legalMovesMask = fromGame.legalMovesMask;
             }
             else
             {

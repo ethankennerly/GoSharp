@@ -18,6 +18,11 @@ namespace Go
         public static ObjectPool<List<Group>> GroupListPool;
         public static ObjectPool<Group> GroupPool;
 
+        static Board()
+        {
+            InitPools();
+        }
+
         public static void InitPools()
         {
             if (ObjectPool<List<Group>>.TryInit(32))
@@ -238,6 +243,9 @@ namespace Go
             Clone(fromBoard);
         }
 
+        /// <summary>
+        /// Clones group caches.
+        /// </summary>
         public void Clone(Board fromBoard)
         {
             if (SizeX != fromBoard.SizeX || SizeY != fromBoard.SizeY)
@@ -256,7 +264,28 @@ namespace Go
             }
             Array.Copy(fromBoard.playerCellMask, playerCellMask, fromBoard.playerCellMask.Length);
             IsScoring = fromBoard.IsScoring;
-            ClearGroupCache();
+
+            if (fromBoard.groupCache == null)
+            {
+                ClearGroupCache();
+            }
+            else
+            {
+                if (groupCache == null)
+                {
+                    groupCache = GroupListPool.Rent();
+                }
+                groupCache.Clear();
+                groupCache.AddRange(fromBoard.groupCache);
+
+                int numCells = fromBoard.groupCache2.Length;
+                if (groupCache2 == null ||
+                    groupCache2.GetLength(0) != SizeX || groupCache2.GetLength(1) != SizeY)
+                {
+                    groupCache2 = new Group[SizeX, SizeY];
+                }
+                Array.Copy(fromBoard.groupCache2, groupCache2, numCells);
+            }
         }
 
         /// <summary>
