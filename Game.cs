@@ -65,6 +65,11 @@ namespace Go
         };
 
         /// <summary>
+        /// Cache legal moves. Copy when cloning game. Update after making a move.
+        /// </summary>
+        private List<Point> legalMoves;
+
+        /// <summary>
         /// Not relative to the other player at this stage.
         /// Komi for white.
         /// Territory if board is scoring.
@@ -161,7 +166,7 @@ namespace Go
         /// </summary>
         /// <param name="fromGame">The Game object before the move.</param>
         /// <param name="cloneTurn">Otherwise, sets opposite turn.</param>
-        public void Clone(Game fromGame, bool cloneTurn = false)
+        public void Clone(Game fromGame, bool cloneTurn = true)
         {
             Board = new Board(fromGame.Board);
 
@@ -184,6 +189,15 @@ namespace Go
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
 
             IsLegal = fromGame.IsLegal;
+            if (cloneTurn)
+            {
+                legalMoves = new List<Point>(fromGame.legalMoves);
+            }
+            else
+            {
+                legalMoves = null;
+                legalMoves = GetLegalMoves();
+            }
         }
 
         /// <summary>
@@ -201,6 +215,8 @@ namespace Go
             m_Ended = false;
             captures[Content.White] = 0;
             captures[Content.Black] = 0;
+            legalMoves = null;
+            legalMoves = GetLegalMoves();
         }
 
         /// <summary>
@@ -237,7 +253,7 @@ namespace Go
                 m_NumPasses--;
 
             IsLegal = true;
-            nextGame.Clone(this, cloneTurn: true);
+            nextGame.Clone(this);
             nextGame.MakeLegalMove(p);
             return nextGame;
         }
@@ -264,7 +280,7 @@ namespace Go
             if (m_NumPasses > 0)
                 m_NumPasses--;
 
-            nextGame.Clone(this);
+            nextGame.Clone(this, cloneTurn: false);
             legal = nextGame.InternalMakeMove(x, y);
             nextGame.IsLegal = legal;
             return nextGame;
@@ -295,7 +311,7 @@ namespace Go
                 Board.IsScoring = true;
             }
 
-            nextGame.Clone(this);
+            nextGame.Clone(this, cloneTurn: false);
             return nextGame;
         }
 
@@ -329,6 +345,8 @@ namespace Go
 
             IsLegal = legal;
             Board.GroupListPool.Return(capturedGroups);
+            legalMoves = null;
+            legalMoves = GetLegalMoves();
             return legal;
         }
 
@@ -357,6 +375,8 @@ namespace Go
             }
             Board.GroupListPool.Return(capturedGroups);
             Turn = oturn;
+            legalMoves = null;
+            legalMoves = GetLegalMoves();
         }
 
         private static readonly List<Point> s_Empty = new List<Point>();
@@ -370,14 +390,17 @@ namespace Go
         /// Smart territory calculation needs pretty good AI.
         /// </returns>
         /// <param name="cloneTurn">Otherwise, gets moves for opposite player's turn.</param>
-        public List<Point> GetLegalMoves(bool cloneTurn = true)
+        public List<Point> GetLegalMoves()
         {
+            if (legalMoves != null)
+                return legalMoves;
+
             if (Board == null || Board.IsScoring || Ended)
                 return s_Empty;
 
-            List<Point> moves = new List<Point>();
-            Content turn = cloneTurn ? Turn : Turn.Opposite();
-            Content oturn = cloneTurn ? Turn.Opposite() : Turn;
+            legalMoves = new List<Point>();
+            Content turn = Turn;
+            Content oturn = turn.Opposite();
 
             for (int x = 0; x < Board.SizeX; x++)
             {
@@ -405,22 +428,22 @@ namespace Go
                     {
                         Log("Game.GetLegalMoves: Legal: " + turn + "(" + x + "," + y + ")" +
                             "\nhasLiberties=" + hasLiberties + " wouldCapture=" + wouldCapture);
-                        moves.Add(new Point(x, y));
+                        legalMoves.Add(new Point(x, y));
                     }
                     Board[x, y] = Content.Empty;
                 }
             }
 
-            if (moves.Count == 0 || m_NumPasses > 0)
+            if (legalMoves.Count == 0 || m_NumPasses > 0)
             {
                 if (!Board.IsScoring)
                 {
                     Log("Game.GetLegalMoves: Pass: " + turn);
-                    moves.Add(PassMove);
+                    legalMoves.Add(PassMove);
                 }
             }
 
-            return moves;
+            return legalMoves;
         }
 
         [Conditional("LOG_GO_GAME")]
