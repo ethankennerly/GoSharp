@@ -164,7 +164,7 @@ namespace Go
         public void UpdateScoring()
         {
             if (IsScoring)
-                CalcTerritory();
+                CacheGroups();
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace Go
                 if (!IsScoring)
                     return rc;
 
-                CalcTerritory();
+                CacheGroups();
 
                 int w = 0, b = 0;
                 if (groupCache == null)
@@ -196,14 +196,11 @@ namespace Go
                     if (!p.AnyNeighbour(playerCellMask[kBlackIndex]))
                     {
                         w += p.NumPoints();
-                        p.Territory = Content.White;
                     }
                     else if (!p.AnyNeighbour(playerCellMask[kWhiteIndex]))
                     {
                         b += p.NumPoints();
-                        p.Territory = Content.Black;
                     }
-                    else p.Territory = Content.Empty;
                 }
                 rc[Content.Black] = b;
                 rc[Content.White] = w;
@@ -491,7 +488,7 @@ namespace Go
             return HasLiberties(GetGroupAt(x, y));
         }
 
-        private void CalcTerritory()
+        private void CacheGroups()
         {
             #if DISABLE_CALC_TERRITORY
             return;
@@ -522,7 +519,7 @@ namespace Go
         {
             if (!IsScoring) return;
             ClearGroupCache();
-            CalcTerritory();
+            CacheGroups();
         }
 
         public bool WouldCapture(int x, int y, Content content)
@@ -619,7 +616,7 @@ namespace Go
         public override string ToString()
         {
             if (IsScoring)
-                CalcTerritory();
+                CacheGroups();
 
             string rc = "";
             for (int i = 0; i < SizeY; i++)
@@ -629,13 +626,6 @@ namespace Go
                     if (this[j, i] == Content.Empty) rc += ".";
                     else if (this[j, i] == Content.Black) rc += "X";
                     else rc += "O";
-                    if (IsScoring)
-                    {
-                        Group g = groupCache2[j, i];
-                        if (g.Territory == Content.Empty) rc += ".";
-                        else if (g.Territory == Content.Black) rc += "x";
-                        else if (g.Territory == Content.White) rc += "o";
-                    }
                     rc += " ";
                 }
                 rc += "\n";
@@ -714,7 +704,7 @@ namespace Go
                 #endif
                     return territories;
 
-                CalcTerritory();
+                CacheGroups();
 
                 for (int i = 0; i < SizeX; i++)
                 {
@@ -723,13 +713,35 @@ namespace Go
                         Group g = groupCache2[i, j];
                         territories.Add(new PositionContent
                         {
-                            Content = g.Territory,
+                            Content = GetTerritory(g),
                             Position = new Point(i, j)
                         });
                     }
                 }
                 return territories;
             }
+        }
+
+        /// <summary>
+        /// Gets the territory ownership color of this group of empty spaces.
+        /// If not empty or not fully surrounded, returns empty.
+        /// </summary>
+        private Content GetTerritory(Group p)
+        {
+            if (p.Content != Content.Empty)
+            {
+                return Content.Empty;
+            }
+            if (!p.AnyNeighbour(playerCellMask[kBlackIndex]))
+            {
+                return Content.White;
+            }
+            else if (!p.AnyNeighbour(playerCellMask[kWhiteIndex]))
+            {
+                return Content.Black;
+            }
+
+            return Content.Empty;
         }
     }
 }

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace Go
 {
@@ -9,13 +6,17 @@ namespace Go
     /// Represents a group of stones (or empty spaces) on a board object. This
     /// object is context-free, i.e. it is not associated with a specific board.
     /// In essence it is simply a set of board coordinates, with an associated
-    /// content (black, white or empty), and state (dead or alive for scoring
-    /// purposes).
+    /// content (black, white or empty).
     /// </summary>
     public sealed class Group
     {
         public static int SizeX;
         public static int SizeY;
+
+        /// <summary>
+        /// Gets the content of the group.
+        /// </summary>
+        public Content Content;
 
         private uint pointsMask;
         public uint PointsMask { get { return pointsMask; } }
@@ -60,26 +61,15 @@ namespace Go
             return false;
         }
 
-        /// <summary>
-        /// Gets the content of the group.
-        /// </summary>
-        public Content Content { get; set; }
-
-        /// <summary>
-        /// Gets the territory ownership color of this group of empty spaces.
-        /// </summary>
-        public Content Territory { get; internal set; }
-
         public Group()
         {
         }
 
         public void Clear()
         {
+            Content = Content.Empty;
             pointsMask = 0;
             neighboursMask = 0;
-            Territory = Content.Empty;
-            Content = Content.Empty;
         }
 
         /// <summary>
