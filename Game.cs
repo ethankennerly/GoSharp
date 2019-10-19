@@ -58,11 +58,7 @@ namespace Go
             }
         }
 
-        private Dictionary<Content, int> captures = new Dictionary<Content, int>()
-        {
-            { Content.Black, 0 },
-            { Content.White, 0 }
-        };
+        private int blackCaptureAdvantage;
 
         /// <summary>
         /// Cache legal moves. Copy when cloning game. Update after making a move.
@@ -81,8 +77,9 @@ namespace Go
             if (player == Content.Empty)
                 return 0f;
 
-            Content other = GetOtherPlayer(player);
-            float score = -captures[other];
+            float score = player == Content.Black ?
+                blackCaptureAdvantage :
+                -blackCaptureAdvantage;
 
             if (player == Content.White)
                 score += Komi;
@@ -149,13 +146,13 @@ namespace Go
         /// Gets the number of stones white has captured
         /// (the number of black stones captured).
         /// </summary>
-        public int WhiteCaptures { get { return captures[Content.White]; } }
+        public int WhiteCaptures { get { return 0; } }
 
         /// <summary>
         /// Gets the number of stones black has captured
         /// (the number of white stones captured).
         /// </summary>
-        public int BlackCaptures { get { return captures[Content.Black]; } }
+        public int BlackCaptures { get { return blackCaptureAdvantage; } }
 
         public Game()
         {
@@ -183,8 +180,7 @@ namespace Go
                 Turn = fromGame.Turn.Opposite();
             }
             #if !DISABLE_CAPTURES_DICTIONARY
-            captures[Content.White] = fromGame.captures[Content.White];
-            captures[Content.Black] = fromGame.captures[Content.Black];
+            blackCaptureAdvantage = fromGame.blackCaptureAdvantage;
             #endif
             superKoSet.Clear();
             foreach (var p in fromGame.superKoSet) superKoSet.Add(p);
@@ -215,8 +211,7 @@ namespace Go
             IsLegal = true;
             m_NumPasses = 0;
             m_Ended = false;
-            captures[Content.White] = 0;
-            captures[Content.Black] = 0;
+            blackCaptureAdvantage = 0;
             legalMoves = null;
             legalMoves = GetLegalMoves();
         }
@@ -334,16 +329,36 @@ namespace Go
                 legal = false;
 
             Content oturn = Turn.Opposite();
+            bool isBlack = Turn == Content.Black;
             Board[x, y] = oturn;
             List<Group> capturedGroups = Board.GroupListPool.Rent();
             capturedGroups.Clear();
             Board.GetCapturedGroups(x, y, capturedGroups);
             if (capturedGroups.Count == 0 && !Board.HasLiberties(x, y)) // Suicide move
             {
-                captures[Turn] += Board.Capture(Board.GetGroupAt(x, y));
+                int numCaptures = Board.Capture(Board.GetGroupAt(x, y));
+                if (isBlack)
+                {
+                    blackCaptureAdvantage -= numCaptures;
+                }
+                else
+                {
+                    blackCaptureAdvantage += numCaptures;
+                }
                 legal = false;
             }
-            else captures[oturn] += Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
+            else
+            {
+                int numCaptures = Board.Capture(capturedGroups.Where(p => p.Content == oturn.Opposite()));
+                if (isBlack)
+                {
+                    blackCaptureAdvantage += numCaptures;
+                }
+                else
+                {
+                    blackCaptureAdvantage -= numCaptures;
+                }
+            }
 
             IsLegal = legal;
             Board.GroupListPool.Return(capturedGroups);
@@ -365,14 +380,13 @@ namespace Go
             Board.GetCapturedGroups(p.x, p.y, capturedGroups);
             foreach (Group capturedGroup in capturedGroups)
             {
-                int numCaptures = Board.Capture(capturedGroup);
-                if (capturedGroup.Content == Turn)
+                if (capturedGroup.Content == Content.Black)
                 {
-                    captures[oturn] += numCaptures;
+                    blackCaptureAdvantage -= Board.Capture(capturedGroup);
                 }
-                else if (capturedGroup.Content == oturn)
+                else if (capturedGroup.Content == Content.White)
                 {
-                    captures[Turn] += numCaptures;
+                    blackCaptureAdvantage += Board.Capture(capturedGroup);
                 }
             }
             Board.GroupListPool.Return(capturedGroups);
