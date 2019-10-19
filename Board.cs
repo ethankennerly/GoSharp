@@ -419,16 +419,18 @@ namespace Go
                 }
             }
 
-            Group group = null;
+            Group group = default(Group);
+            bool foundGroup = false;
             foreach (Group cache in groupCache)
             {
                 if (cache.ContainsPoint(x, y))
                 {
                     group = cache;
+                    foundGroup = true;
                     break;
                 }
             }
-            if (group == null)
+            if (!foundGroup)
             {
                 group = GroupPool.Rent();
                 group.Clear();
@@ -502,7 +504,7 @@ namespace Go
                 {
                     for (int j = 0; j < SizeY; j++)
                     {
-                        if (groupCache == null || groupCache2 == null || groupCache2[i, j] == null)
+                        if (groupCache == null || groupCache2 == null || Group.HasNoPoints(groupCache2[i, j]))
                         {
                             GetGroupAt(i, j);
                             pass = true;
@@ -587,7 +589,7 @@ namespace Go
 
         internal int Capture(Group g)
         {
-            SetEmptyContentMask(g.PointsMask);
+            SetEmptyContentMask(g.pointsMask);
 
             return g.NumPoints();
         }

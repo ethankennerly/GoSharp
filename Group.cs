@@ -18,8 +18,7 @@ namespace Go
         /// </summary>
         public Content Content;
 
-        private uint pointsMask;
-        public uint PointsMask { get { return pointsMask; } }
+        public uint pointsMask;
         private uint neighboursMask;
 
         /// <remarks>
@@ -36,6 +35,11 @@ namespace Go
                 value &= value - 1;
             }
             return count;
+        }
+
+        public static bool HasNoPoints(Group group)
+        {
+            return group == null || group.pointsMask == 0;
         }
 
         public int NumPoints()
@@ -61,24 +65,11 @@ namespace Go
             return false;
         }
 
-        public Group()
-        {
-        }
-
         public void Clear()
         {
             Content = Content.Empty;
             pointsMask = 0;
             neighboursMask = 0;
-        }
-
-        /// <summary>
-        /// Constructs a group object of specified content.
-        /// </summary>
-        /// <param name="c">The group content.</param>
-        public Group(Content c)
-        {
-            Content = c;
         }
 
         /// <summary>
