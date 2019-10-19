@@ -15,6 +15,11 @@ namespace Go
         private const int kBlackIndex = 0;
         private const int kWhiteIndex = 1;
 
+        private const int kMaxSize = 5;
+        private const int kMaxCells = kMaxSize * kMaxSize;
+        private const int kBothPlayerCells = 2 * kMaxCells;
+        private const int kMaxGroups = kMaxCells / 2 + 1;
+
         public static ObjectPool<List<Group>> GroupListPool;
         public static ObjectPool<Group> GroupPool;
 
@@ -50,10 +55,6 @@ namespace Go
         {
             return ~(playerCellMask[kBlackIndex] | playerCellMask[kWhiteIndex]);
         }
-
-        private const int kMaxSize = 5;
-        private const int kMaxCells = kMaxSize * kMaxSize;
-        private const int kBothPlayerCells = 2 * kMaxCells;
 
         public ulong GetContentMask()
         {
@@ -107,6 +108,7 @@ namespace Go
 
         private Group[,] groupCache2;
         private List<Group> groupCache = null;
+        // TODO: private Group[] groupsArray = new Group[kMaxGroups];
         private bool _IsScoring = false;
 
         /// <summary>
@@ -161,7 +163,6 @@ namespace Go
 
         public void UpdateScoring()
         {
-            ClearGroupCache();
             if (IsScoring)
                 CalcTerritory();
         }
@@ -169,8 +170,6 @@ namespace Go
         /// <summary>
         /// Gets a Dictionary&lt;Content,int&gt; containing the score for each side. The score
         /// includes dead groups but does not include captured stones (no game context).
-        /// If SetDeadGroup is called, this property must be retrieved again to get
-        /// the updated score.
         /// </summary>
         public Dictionary<Content, int> Territory
         {
@@ -205,13 +204,6 @@ namespace Go
                         p.Territory = Content.Black;
                     }
                     else p.Territory = Content.Empty;
-                }
-                foreach (var p in groupCache.Where(x => x.IsDead))
-                {
-                    if (p.Content == Content.Black)
-                        w += p.NumPoints() * 2;
-                    else if (p.Content == Content.White)
-                        b += p.NumPoints() * 2;
                 }
                 rc[Content.Black] = b;
                 rc[Content.White] = w;
@@ -346,20 +338,11 @@ namespace Go
         public Content GetContentAt(int x, int y)
         {
             uint cellMask = GetCellMask(x, y, SizeX, SizeY);
-            Content content;
             if ((playerCellMask[kBlackIndex] & cellMask) != 0)
-                content = Content.Black;
-            else if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
-                content = Content.White;
-            else
-                content = Content.Empty;
-
-            #if !DISABLE_GROUP_POINTS
-            if (IsScoring && content != Content.Empty && groupCache2[x, y] != null && groupCache2[x, y].IsDead)
-                return Content.Empty;
-            #endif
-
-            return content;
+                return Content.Black;
+            if ((playerCellMask[kWhiteIndex] & cellMask) != 0)
+                return Content.White;
+            return Content.Empty;
         }
 
         public Content GetContentAt(int cellIndex)
@@ -533,29 +516,6 @@ namespace Go
         }
 
         /// <summary>
-        /// Marks a group as dead for the purposes of scoring. This method has no effect if
-        /// the board is not in scoring mode (see the IsScoring property).
-        /// </summary>
-        /// <param name="n">The coordinates of the position of a stone in the group.</param>
-        public void SetDeadGroup(Point n)
-        {
-            SetDeadGroup(n.x, n.y);
-        }
-
-        /// <summary>
-        /// Marks a group as dead for the purposes of scoring. This method has no effect if
-        /// the board is not in scoring mode (see the IsScoring property).
-        /// </summary>
-        /// <param name="x">The X coordinate of a position belonging to the group.</param>
-        /// <param name="y">The Y coordinate of a position belonging to the group.</param>
-        public void SetDeadGroup(int x, int y)
-        {
-            Group g = GetGroupAt(x, y);
-            if (g.Content == Content.Empty) return;
-            g.IsDead = !g.IsDead;
-        }
-
-        /// <summary>
         /// Resets the scoring process, unmarking dead groups.
         /// </summary>
         public void ResetScoring()
@@ -672,8 +632,7 @@ namespace Go
                     if (IsScoring)
                     {
                         Group g = groupCache2[j, i];
-                        if (g.IsDead) rc += "D";
-                        else if (g.Territory == Content.Empty) rc += ".";
+                        if (g.Territory == Content.Empty) rc += ".";
                         else if (g.Territory == Content.Black) rc += "x";
                         else if (g.Territory == Content.White) rc += "o";
                     }

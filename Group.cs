@@ -66,11 +66,6 @@ namespace Go
         public Content Content { get; set; }
 
         /// <summary>
-        /// Gets or sets whether this group is dead for the purposes of scoring.
-        /// </summary>
-        public bool IsDead { get; set; }
-
-        /// <summary>
         /// Gets the territory ownership color of this group of empty spaces.
         /// </summary>
         public Content Territory { get; internal set; }
@@ -83,7 +78,6 @@ namespace Go
         {
             pointsMask = 0;
             neighboursMask = 0;
-            IsDead = false;
             Territory = Content.Empty;
             Content = Content.Empty;
         }
