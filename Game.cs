@@ -77,12 +77,7 @@ namespace Go
             if (player == Content.Empty)
                 return 0f;
 
-            float score = player == Content.Black ?
-                blackCaptureAdvantage :
-                -blackCaptureAdvantage;
-
-            if (player == Content.White)
-                score += Komi;
+            float score = player == Content.White ? Komi : blackCaptureAdvantage;
 
             if (Board != null && Board.IsScoring)
             {
@@ -94,21 +89,16 @@ namespace Go
             return score;
         }
 
-        private Content GetOtherPlayer(Content player)
-        {
-            return player == Content.Black ? Content.White : Content.Black;
-        }
-
         public double GetResult(Content player)
         {
             #if DISABLE_CALC_TERRITORY
             return 0.5;
             #endif
-            if (!Board.IsScoring)
+            if (!Ended)
                 return 0.5;
 
             float score = GetScore(player);
-            float otherScore = GetScore(GetOtherPlayer(player));
+            float otherScore = GetScore(player.Opposite());
             return score < otherScore ? 0.0 : (score > otherScore ? 1.0 : 0.5);
         }
 
@@ -411,7 +401,7 @@ namespace Go
             if (legalMoves != null)
                 return legalMoves;
 
-            if (Board == null || Board.IsScoring || Ended)
+            if (Board == null || Ended)
                 return s_Empty;
 
             legalMoves = new List<Point>();
@@ -452,11 +442,8 @@ namespace Go
 
             if (legalMoves.Count == 0 || m_NumPasses > 0)
             {
-                if (!Board.IsScoring)
-                {
-                    Log("Game.GetLegalMoves: Pass: " + turn);
-                    legalMoves.Add(PassMove);
-                }
+                Log("Game.GetLegalMoves: Pass: " + turn);
+                legalMoves.Add(PassMove);
             }
 
             return legalMoves;

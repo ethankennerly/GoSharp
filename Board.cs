@@ -143,7 +143,7 @@ namespace Go
         /// Gets or sets a flag indicating whether this board is in scoring mode.
         /// If this property is changed from false to true, the scoring cache is cleared,
         /// and all dead groups are reinstated. To reset the scoring process, set this
-        /// property to false and then to true again, or alternatively call ResetScoring.
+        /// property to false and then to true again.
         /// </summary>
         public bool IsScoring
         {
@@ -156,15 +156,8 @@ namespace Go
                 if (_IsScoring != value)
                 {
                     _IsScoring = value;
-                    UpdateScoring();
                 }
             }
-        }
-
-        public void UpdateScoring()
-        {
-            if (IsScoring)
-                CacheGroups();
         }
 
         /// <summary>
@@ -512,16 +505,6 @@ namespace Go
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Resets the scoring process, unmarking dead groups.
-        /// </summary>
-        public void ResetScoring()
-        {
-            if (!IsScoring) return;
-            ClearGroupCache();
-            CacheGroups();
         }
 
         public bool WouldCapture(int x, int y, Content content)
